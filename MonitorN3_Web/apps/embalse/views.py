@@ -1,22 +1,19 @@
 from django.shortcuts import render
-from . models import Embalse
-from django.http import HttpResponse
-
+from . forms.embalse_form import EmbalseForm
 
 def form(request):
-    return render(request, 'form.html',  {})
+    embalse_form = EmbalseForm()
+    return render(request, 'form.html',  {'embalse_form': embalse_form})
 
 def nivelembalse(request):
     if request.method == "POST":
-        fecha = request.POST['fecha']
-        hora = request.POST['hora']
-        nivel_embalse = request.POST['nivel_embalse']
+        embalse_form = EmbalseForm(request.POST)
+        if embalse_form.is_valid():
+            embalse_form.save()
+        else:
+            return render(request, 'form.html')
 
-        Embalse.objects.create(
-            fecha=fecha,
-            hora=hora,
-            nivel_embalse=nivel_embalse,
-        )
         return render(request, 'success.html', {})
 
-    return render(request, 'form.html')
+    embalse_form = EmbalseForm()
+    return render(request, 'form.html', {'embalse_form': embalse_form})
