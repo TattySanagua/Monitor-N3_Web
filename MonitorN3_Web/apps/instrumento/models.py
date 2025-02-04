@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.timezone import now
 
 class Unidad(models.Model):
     nombre_unidad = models.CharField(max_length=50, null=False)
@@ -25,7 +26,7 @@ class Tipo(models.Model):
 class Instrumento(models.Model):
     nombre = models.CharField(max_length=50, null=False)
     id_tipo = models.ForeignKey(Tipo, on_delete=models.CASCADE, null=False)
-    fecha_alta = models.DateField(null=True, blank=True)
+    fecha_alta = models.DateField(null=True, blank=True, default=now)
     fecha_baja = models.DateField(null=True, blank=True)
     activo = models.BooleanField(default=True)
 
