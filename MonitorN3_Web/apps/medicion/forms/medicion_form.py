@@ -39,27 +39,27 @@ class MedicionAforadorVolumetrico(ModelForm):
         widget=forms.Select(attrs={'class': 'form-control'})
     )
 
-    volumen_1 = forms.FloatField(label='Volumen [l]',
+    volumen_1 = forms.FloatField(label='Volumen [l]', required=False,
                                  widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}))
     tiempo_1 = forms.FloatField(
-        label='Tiempo (s)',
+        label='Tiempo (s)', required=False,
         widget=forms.NumberInput(
             attrs={'class': 'form-control', 'step': '0.01'}))
 
     volumen_2 = forms.FloatField(
-        label='Volumen [l]',
+        label='Volumen [l]', required=False,
         widget=forms.NumberInput(
             attrs={'class': 'form-control', 'step': '0.01'}))
     tiempo_2 = forms.FloatField(
-        label='Tiempo (s)',
+        label='Tiempo (s)', required=False,
         widget=forms.NumberInput(
             attrs={'class': 'form-control', 'step': '0.01'}))
 
     volumen_3 = forms.FloatField(
-        label='Volumen [l]',
+        label='Volumen [l]', required=False,
         widget=forms.NumberInput(
             attrs={'class': 'form-control', 'step': '0.01'}))
-    tiempo_3 = forms.FloatField(label='Tiempo (s)',
+    tiempo_3 = forms.FloatField(label='Tiempo (s)', required=False,
                                 widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}))
     class Meta:
         model = Medicion
@@ -77,7 +77,7 @@ class MedicionAforadorParshall(ModelForm):
 
     class Meta:
         model = Medicion
-        fields = ['id_instrumento', 'fecha', 'valor']
+        fields = ['id_instrumento', 'fecha']
         widgets = {
             'fecha': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         }
