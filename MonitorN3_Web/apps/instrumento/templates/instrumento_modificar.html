@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Modificar Instrumento{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Modificar Instrumento</h2>
+    <div class="form-container">
+    <form method="POST">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label class="form-label">Tipo de Instrumento:</label>
+            <input type="text" class="form-control" value="{{ instrumento.id_tipo.nombre_tipo }}" readonly>
+        </div>
+
+        <div class="mb-3">
+            {{ form.nombre.label_tag }}
+            {{ form.nombre }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.fecha_alta.label_tag }}
+            {{ form.fecha_alta }}
+        </div>
+
+        {% if formset %}
+            <h3>Parámetros</h3>
+            {{ formset.management_form }}
+            {% for param_form in formset %}
+                <div class="mb-3">
+                    {{ param_form.as_p }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        <div class="button-container">
+            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        </div>
+        <div class="button-container">
+            <a href="{% url 'instrumento_tabla' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+    </div>
+</div>
+{% endblock %}

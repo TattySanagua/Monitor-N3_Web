@@ -195,3 +195,12 @@ def afoparshall_guardar(request):
             return render(request, 'medicion_afoparshall_form.html', {'form': form})
     else:
         return JsonResponse({'error': 'Solicitud no válida'}, status=400)
+
+def piezometro_tabla(request):
+    pass
+
+def freatimetro_tabla(request):
+    pass
+
+def aforador_tabla(request):
+    pass

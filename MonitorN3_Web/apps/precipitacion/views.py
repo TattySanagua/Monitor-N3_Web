@@ -2,7 +2,7 @@ from django.shortcuts import render
 from . forms.precipitacion_form import PrecipitacionForm
 from django.http import HttpResponse
 
-def form(request):
+def precipitacion_form(request):
     precipitacion_form = PrecipitacionForm()
     return render(request, 'precipitacion_form.html', {'precipitacion_form': precipitacion_form})
 

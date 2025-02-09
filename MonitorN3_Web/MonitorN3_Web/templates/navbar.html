@@ -1,0 +1,69 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'index' %}">Monitor N3</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Inicio</a></li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarEmbalse" role="button" data-bs-toggle="dropdown">Embalse</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'embalse_form' %}">Nivel de Embalse</a></li>
+                            <li><a class="dropdown-item" href="{% url 'precipitacion_form' %}">Precipitación</a></li>
+                            <li><a class="dropdown-item" href="{% url 'tabla_embalse' %}">Tabla</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Instrumentos -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarInstrumentos" role="button" data-bs-toggle="dropdown">
+                            Instrumentos
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'crear' %}">Agregar Nuevo</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'instrumento_tabla' %}">Tabla</a></li>
+                            <li><hr class="dropdown-divider"></li>
+
+                            <li class="dropdown-submenu position-relative">
+                                <a class="dropdown-item dropdown-toggle" href="#">Piezómetro</a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'piezometro_calcular' %}">Medición</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'piezometro_tabla' %}">Tabla</a></li>
+                                </ul>
+                            </li>
+
+                            <!-- Aforador -->
+                            <li class="dropdown-submenu position-relative">
+                                <a class="dropdown-item dropdown-toggle" href="#">Aforador</a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'afovolumetrico_calcular' %}">Medición Volumétrico</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'afoparshall_calcular' %}">Medición Parshall</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'aforador_tabla' %}">Tabla</a></li>
+                                </ul>
+                            </li>
+
+                            <li class="dropdown-submenu position-relative">
+                                <a class="dropdown-item dropdown-toggle" href="#">Freatímetro</a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'freatimetro_calcular' %}">Medición</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'freatimetro_tabla' %}">Tabla</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarGraficos" role="button" data-bs-toggle="dropdown">Gráficos</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'predefinidos' %}">Predefinidos</a></li>
+                            <li><a class="dropdown-item" href="{% url 'personalizados' %}">Personalizados</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>

@@ -1,13 +1,8 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Crear Instrumento</title>
-</head>
-<body>
-
-    <h1>Registrar Nuevo Instrumento</h1>
-
+{% extends 'base.html' %}
+{% block title %}Instrumento{% endblock %}
+{% block content %}
+<h1>Registrar Nuevo Instrumento</h1>
+    <div class="form-container">
     <form method="POST">
         {% csrf_token %}
         <div class="form-group">
@@ -47,10 +42,11 @@
                 <input type="number" id="u" name="u" step="0.0001" class="form-control"><br>
             </div>
         </div>
-
-        <button type="submit">Guardar</button>
+        <div class="button-container">
+            <button type="submit">Guardar</button>
+        </div>
     </form>
-
+    </div>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             let tipoInstrumento = document.getElementById("tipo-instrumento");
@@ -78,6 +74,4 @@
             }
         });
     </script>
-
-</body>
-</html>
+{% endblock %}

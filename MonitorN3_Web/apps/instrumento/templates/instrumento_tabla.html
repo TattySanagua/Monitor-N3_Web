@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Instrumentos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">Lista de Instrumentos</h2>
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Fecha de Alta</th>
+                <th>Fecha de Baja</th>
+                <th>Activo</th>
+                <th>Parámetros</th>
+                <th>Modificar</th>
+                <th>Eliminar</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for instrumento in instrumentos %}
+            <tr>
+                <td>{{ instrumento.nombre }}</td>
+                <td>{{ instrumento.id_tipo.nombre_tipo }}</td>
+                <td>{{ instrumento.fecha_alta|date:"d/m/Y" |default:"-"}}</td>
+                <td>{{ instrumento.fecha_baja|date:"d/m/Y" |default:"-"}}</td>
+                <td>
+                    {% if instrumento.activo %}
+                        <span class="badge bg-success">Sí</span>
+                    {% else %}
+                        <span class="badge bg-danger">No</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% for parametro in instrumento.parametro_set.all %}
+                        <strong>{{ parametro.nombre_parametro }}:</strong> {{ parametro.valor }}<br>
+                    {% empty %}
+                        <em>-</em>
+                    {% endfor %}
+                </td>
+                <td>
+                    <a href="{% url 'instrumento_modificar' instrumento.id %}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-edit"></i>
+                    </a>
+                </td>
+                <td>
+                    <a href="{% url 'baja_instrumento' instrumento.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Seguro que quieres eliminar este instrumento?')">
+                    <i class="fas fa-trash-alt"></i>
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">No hay instrumentos registrados.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<script>
+    function darDeBaja(instrumentoId) {
+        if (confirm("¿Está seguro de que desea dar de baja este instrumento?")) {
+            fetch(`/instrumento/dar_de_baja/${instrumentoId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'ok') {
+                    alert("Instrumento dado de baja correctamente.");
+                    location.reload();
+                } else {
+                    alert("Error al dar de baja el instrumento.");
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    }
+</script>
+{% endblock %}

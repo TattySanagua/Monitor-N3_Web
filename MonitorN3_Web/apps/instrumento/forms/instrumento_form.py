@@ -16,11 +16,22 @@ class InstrumentoForm(ModelForm):
             'fecha_alta': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         }
 
-# class ParametroForm(ModelForm):
-#     class Meta:
-#         model = Parametro
-#         fields = ['nombre_parametro', 'valor']
-#         widgets = {
-#             'nombre_parametro': forms.TextInput(attrs={'class': 'form-control'}),
-#             'valor': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.0001'}),
-#         }
+class InstrumentoUpdateForm(ModelForm):
+    """Formulario para editar solo el nombre y la fecha de instalación del instrumento"""
+    class Meta:
+        model = Instrumento
+        fields = ['nombre', 'fecha_alta']
+        widgets = {
+            'nombre': forms.TextInput(attrs={'class': 'form-control'}),
+            'fecha_alta': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+        }
+
+class ParametroForm(ModelForm):
+    """Formulario para editar los parámetros de un instrumento"""
+    class Meta:
+        model = Parametro
+        fields = ['nombre_parametro', 'valor']
+        widgets = {
+            'nombre_parametro': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+            'valor': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+        }

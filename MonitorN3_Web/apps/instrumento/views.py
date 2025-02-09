@@ -1,8 +1,10 @@
-from django.shortcuts import render, redirect
-from .models import Parametro, Tipo
-from . forms.instrumento_form import InstrumentoForm
+from django.forms import modelformset_factory
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import Parametro, Tipo, Instrumento
+from . forms.instrumento_form import InstrumentoForm, InstrumentoUpdateForm, ParametroForm
 from django.utils.timezone import now
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+
 
 def crear_instrumento(request):
 
@@ -51,3 +53,43 @@ def crear_instrumento(request):
             instrumento_form = InstrumentoForm()
 
     return render(request, "instrumento_form.html", {"instrumento_form": instrumento_form})
+
+def instrumento_tabla(request):
+
+    instrumentos = Instrumento.objects.all().prefetch_related('parametro_set')
+
+    contexto = {'instrumentos': instrumentos}
+    return render(request, 'instrumento_tabla.html', contexto)
+
+def baja_instrumento(request, instrumento_id):
+    """Vista para dar de baja un instrumento (baja lógica)."""
+    instrumento = get_object_or_404(Instrumento, id=instrumento_id)
+    instrumento.activo = False  # Baja lógica
+    instrumento.fecha_baja = now()  # Registrar fecha de baja
+    instrumento.save()
+    return JsonResponse({'status': 'ok', 'message': 'Instrumento dado de baja correctamente'})
+
+def instrumento_modificar(request, instrumento_id):
+    """Vista para modificar un instrumento (nombre, fecha de instalación y parámetros)"""
+    instrumento = get_object_or_404(Instrumento, id=instrumento_id)
+
+    #Formset para manejar múltiples parámetros
+    ParametroFormSet = modelformset_factory(Parametro, form=ParametroForm, extra=0)
+
+    if request.method == 'POST':
+        form = InstrumentoUpdateForm(request.POST, instance=instrumento)
+        formset = ParametroFormSet(request.POST, queryset=Parametro.objects.filter(id_instrumento=instrumento))
+
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            return redirect('instrumento_tabla')
+    else:
+        form = InstrumentoUpdateForm(instance=instrumento)
+        formset = ParametroFormSet(queryset=Parametro.objects.filter(id_instrumento=instrumento))
+
+    return render(request, 'instrumento_modificar.html', {
+        'form': form,
+        'formset': formset,
+        'instrumento': instrumento
+    })
