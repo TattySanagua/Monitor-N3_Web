@@ -10,7 +10,6 @@ from .models import Medicion
 import openpyxl
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
-from reportlab.lib.utils import simpleSplit
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 
@@ -49,7 +48,7 @@ def piezometro_guardar(request):
         form = MedicionPiezometroForm(request.POST)
         if form.is_valid():
             medicion = form.save(commit=False)
-            medicion.valor = request.POST.get('nivel_piezometrico')  # Obtener el valor del campo oculto
+            medicion.valor = request.POST.get('nivel_piezometrico')
             medicion.save()
             return redirect('piezometro_calcular')
         else:
@@ -92,7 +91,7 @@ def freatimetro_guardar(request):
         form = MedicionFreatimetroForm(request.POST)
         if form.is_valid():
             medicion = form.save(commit=False)
-            medicion.valor = request.POST.get('nivel_freatico')  # Obtener el valor del campo oculto
+            medicion.valor = request.POST.get('nivel_freatico')
             medicion.save()
             return redirect('freatimetro_calcular')
         else:
@@ -104,20 +103,17 @@ def afovolumetrico_calcular(request):
     if request.method == 'POST':
         form = MedicionAforadorVolumetrico(request.POST)
         if form.is_valid():
-            # Obtener los datos de volumen y tiempo
+
             v1, t1 = form.cleaned_data['volumen_1'], form.cleaned_data['tiempo_1']
             v2, t2 = form.cleaned_data['volumen_2'], form.cleaned_data['tiempo_2']
             v3, t3 = form.cleaned_data['volumen_3'], form.cleaned_data['tiempo_3']
 
-            # Cálculo de caudales individuales (Q = V / T)
             q1 = v1 / t1 if t1 > 0 else 0
             q2 = v2 / t2 if t2 > 0 else 0
             q3 = v3 / t3 if t3 > 0 else 0
 
-            # Cálculo del caudal promedio
             q_promedio = (q1 + q2 + q3) / 3
 
-            # Devolver los resultados al frontend
             return JsonResponse({
                 'q1': round(q1, 2),
                 'q2': round(q2, 2),
@@ -136,8 +132,6 @@ def afovolumetrico_guardar(request):
         if form.is_valid():
             medicion = form.save(commit=False)
             q_promedio = request.POST.get('q_promedio')
-
-            print(f"Caudal Promedio recibido: {q_promedio}")  # Verificamos el valor recibido
 
             try:
                 medicion.valor = Decimal(q_promedio)
@@ -158,13 +152,11 @@ def afoparshall_calcular(request):
             id_instrumento = data.get('id_instrumento')
             lectura_ha = data.get('lectura_ha')
 
-            # Validación de los datos recibidos
             if not id_instrumento or lectura_ha is None:
                 return JsonResponse({'error': 'Datos incompletos'}, status=400)
 
             lectura_ha = float(lectura_ha)
 
-            # Traer los parámetros k y u de la base de datos para el aforador seleccionado
             k_param = Parametro.objects.filter(id_instrumento=id_instrumento, nombre_parametro='k').first()
             u_param = Parametro.objects.filter(id_instrumento=id_instrumento, nombre_parametro='u').first()
 
@@ -172,7 +164,7 @@ def afoparshall_calcular(request):
                 k = float(k_param.valor)
                 u = float(u_param.valor)
 
-                # Cálculo del caudal: Q = k * ha^u
+                # Fórmula: Q = k * ha^u
                 caudal = k * math.pow(lectura_ha, u)
 
                 return JsonResponse({'caudal': round(caudal, 3)})
@@ -205,23 +197,18 @@ def afoparshall_guardar(request):
         return JsonResponse({'error': 'Solicitud no válida'}, status=400)
 
 def piezometro_tabla(request):
-    # Obtener todos los instrumentos tipo PIEZÓMETRO
     piezometros = Instrumento.objects.filter(id_tipo__nombre_tipo="PIEZÓMETRO")
 
-    # Obtener todas las mediciones de piezómetros y embalse, ordenadas por fecha
     mediciones = Medicion.objects.filter(id_instrumento__in=piezometros).order_by('-fecha')
     niveles_embalse = Embalse.objects.all().order_by('-fecha')
 
-    # Estructura para almacenar los datos
     datos_tabla = {}
 
-    # Agregar las mediciones de nivel de embalse
     for nivel in niveles_embalse:
-        fecha = nivel.fecha.strftime("%d-%m-%Y")  # Formato de fecha
+        fecha = nivel.fecha.strftime("%d-%m-%Y")
         if fecha not in datos_tabla:
-            datos_tabla[fecha] = {"nivel_embalse": nivel.nivel_embalse}  # Guardamos el nivel del embalse
+            datos_tabla[fecha] = {"nivel_embalse": nivel.nivel_embalse}
 
-    # Agregar las mediciones piezométricas
     for medicion in mediciones:
         fecha = medicion.fecha.strftime("%d-%m-%Y")
         instrumento = medicion.id_instrumento.nombre
@@ -230,9 +217,8 @@ def piezometro_tabla(request):
         if fecha not in datos_tabla:
             datos_tabla[fecha] = {"nivel_embalse": "-"}
 
-        datos_tabla[fecha][instrumento] = valor  # Guardamos la medición del piezómetro
+        datos_tabla[fecha][instrumento] = valor
 
-    # Convertir los datos en listas para enviarlos al template
     fechas = sorted(datos_tabla.keys(), reverse=True)
     nombres_piezometros = [p.nombre for p in piezometros]
 
@@ -245,23 +231,19 @@ def piezometro_tabla(request):
     return render(request, "piezometro_tabla.html", contexto)
 
 def freatimetro_tabla(request):
-    # Obtener todos los instrumentos tipo FREATÍMETRO
+
     freatimetros = Instrumento.objects.filter(id_tipo__nombre_tipo="FREATÍMETRO")
 
-    # Obtener todas las mediciones de freatímetros y embalse, ordenadas por fecha
     mediciones = Medicion.objects.filter(id_instrumento__in=freatimetros).order_by('-fecha')
     niveles_embalse = Embalse.objects.all().order_by('-fecha')
 
-    # Estructura para almacenar los datos
     datos_tabla = {}
 
-    # Agregar las mediciones de nivel de embalse
     for nivel in niveles_embalse:
         fecha = nivel.fecha.strftime("%d-%m-%Y")
         if fecha not in datos_tabla:
             datos_tabla[fecha] = {"nivel_embalse": nivel.nivel_embalse}
 
-    # Agregar las mediciones de freatímetros
     for medicion in mediciones:
         fecha = medicion.fecha.strftime("%d-%m-%Y")
         instrumento = medicion.id_instrumento.nombre
@@ -272,7 +254,6 @@ def freatimetro_tabla(request):
 
         datos_tabla[fecha][instrumento] = valor
 
-    # Convertir los datos en listas para enviarlos al template
     fechas = sorted(datos_tabla.keys(), reverse=True)
     nombres_freatimetros = [f.nombre for f in freatimetros]
 
@@ -285,23 +266,19 @@ def freatimetro_tabla(request):
     return render(request, "freatimetro_tabla.html", contexto)
 
 def aforador_tabla(request):
-    # Obtener todos los instrumentos tipo AFORADOR
+
     aforadores = Instrumento.objects.filter(id_tipo__nombre_tipo__icontains="AFORADOR")
 
-    # Obtener todas las mediciones de aforadores y embalse, ordenadas por fecha
     mediciones = Medicion.objects.filter(id_instrumento__in=aforadores).order_by('-fecha')
     niveles_embalse = Embalse.objects.all().order_by('-fecha')
 
-    # Estructura para almacenar los datos
     datos_tabla = {}
 
-    # Agregar las mediciones de nivel de embalse
     for nivel in niveles_embalse:
         fecha = nivel.fecha.strftime("%d-%m-%Y")
         if fecha not in datos_tabla:
             datos_tabla[fecha] = {"nivel_embalse": nivel.nivel_embalse}
 
-    # Agregar las mediciones de aforadores
     for medicion in mediciones:
         fecha = medicion.fecha.strftime("%d-%m-%Y")
         instrumento = medicion.id_instrumento.nombre
@@ -312,7 +289,6 @@ def aforador_tabla(request):
 
         datos_tabla[fecha][instrumento] = valor
 
-    # Convertir los datos en listas para enviarlos al template
     fechas = sorted(datos_tabla.keys(), reverse=True)
     nombres_aforadores = [a.nombre for a in aforadores]
 
@@ -382,19 +358,15 @@ def export_instrumento_pdf(request, instrumentos, filename, titulo):
     response = HttpResponse(content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
-    # Crear PDF en modo horizontal
     p = canvas.Canvas(response, pagesize=landscape(letter))
     width, height = landscape(letter)
 
-    # Encabezado
     p.setFont("Helvetica-Bold", 16)
     p.drawString(30, height - 40, f"{titulo} - Mediciones")
 
-    # Obtener las mediciones y estructurar los datos
     mediciones = Medicion.objects.filter(id_instrumento__in=instrumentos).order_by('-fecha')
     niveles_embalse = Embalse.objects.all().order_by('-fecha')
 
-    # Crear estructura de datos para la tabla
     datos_tabla = {}
     for nivel in niveles_embalse:
         fecha = nivel.fecha.strftime("%d-%m-%Y")
@@ -410,7 +382,6 @@ def export_instrumento_pdf(request, instrumentos, filename, titulo):
 
         datos_tabla[fecha][instrumento] = valor
 
-    # Definir encabezados
     fechas = sorted(datos_tabla.keys(), reverse=True)
     nombres_instrumentos = [i.nombre for i in instrumentos]
 
@@ -422,7 +393,6 @@ def export_instrumento_pdf(request, instrumentos, filename, titulo):
             fila.append(datos_tabla.get(fecha, {}).get(nombre, "-"))
         tabla_data.append(fila)
 
-    # Dibujar tabla en PDF
     table = Table(tabla_data)
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.gray),
@@ -434,11 +404,9 @@ def export_instrumento_pdf(request, instrumentos, filename, titulo):
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
     ]))
 
-    # Ubicación de la tabla en el PDF
     table.wrapOn(p, width, height)
     table.drawOn(p, 30, height - 100 - (len(tabla_data) * 20))
 
-    # Guardar y retornar el PDF
     p.showPage()
     p.save()
     return response

@@ -4,7 +4,13 @@ from .models import Parametro, Tipo, Instrumento
 from . forms.instrumento_form import InstrumentoForm, InstrumentoUpdateForm, ParametroForm
 from django.utils.timezone import now
 from django.http import HttpResponse, JsonResponse
-
+import openpyxl
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.pdfgen import canvas
+from reportlab.platypus import Table, TableStyle
+from reportlab.lib import colors
+from django.shortcuts import render
+from django.http import HttpResponse
 
 def crear_instrumento(request):
 
@@ -55,25 +61,39 @@ def crear_instrumento(request):
     return render(request, "instrumento_form.html", {"instrumento_form": instrumento_form})
 
 def instrumento_tabla(request):
+    nombre_filtro = request.GET.get('nombre', '')
+    tipo_filtro = request.GET.get('tipo', '')
 
     instrumentos = Instrumento.objects.all().prefetch_related('parametro_set')
 
-    contexto = {'instrumentos': instrumentos}
+    if nombre_filtro:
+        instrumentos = instrumentos.filter(nombre__icontains=nombre_filtro)
+
+    if tipo_filtro:
+        instrumentos = instrumentos.filter(id_tipo__nombre_tipo=tipo_filtro)
+
+    tipos_instrumento = Tipo.objects.values_list('nombre_tipo', flat=True).distinct()
+
+    contexto = {
+        'instrumentos': instrumentos,
+        'tipos_instrumento': tipos_instrumento,
+        'nombre_filtro': nombre_filtro,
+        'tipo_filtro': tipo_filtro,
+    }
     return render(request, 'instrumento_tabla.html', contexto)
 
 def baja_instrumento(request, instrumento_id):
-    """Vista para dar de baja un instrumento (baja lógica)."""
+
     instrumento = get_object_or_404(Instrumento, id=instrumento_id)
-    instrumento.activo = False  # Baja lógica
-    instrumento.fecha_baja = now()  # Registrar fecha de baja
+    instrumento.activo = False  #Baja lógica
+    instrumento.fecha_baja = now()
     instrumento.save()
     return JsonResponse({'status': 'ok', 'message': 'Instrumento dado de baja correctamente'})
 
 def instrumento_modificar(request, instrumento_id):
-    """Vista para modificar un instrumento (nombre, fecha de instalación y parámetros)"""
+
     instrumento = get_object_or_404(Instrumento, id=instrumento_id)
 
-    #Formset para manejar múltiples parámetros
     ParametroFormSet = modelformset_factory(Parametro, form=ParametroForm, extra=0)
 
     if request.method == 'POST':
@@ -93,3 +113,69 @@ def instrumento_modificar(request, instrumento_id):
         'formset': formset,
         'instrumento': instrumento
     })
+
+
+def export_instrumentos_excel(request):
+    instrumentos = Instrumento.objects.all()
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Instrumentos"
+
+    headers = ["Nombre", "Tipo", "Fecha de Alta", "Fecha de Baja", "Activo"]
+    ws.append(headers)
+
+    for instrumento in instrumentos:
+        ws.append([
+            instrumento.nombre,
+            instrumento.id_tipo.nombre_tipo,
+            instrumento.fecha_alta.strftime("%d/%m/%Y") if instrumento.fecha_alta else "-",
+            instrumento.fecha_baja.strftime("%d/%m/%Y") if instrumento.fecha_baja else "-",
+            "Sí" if instrumento.activo else "No"
+        ])
+
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = 'attachment; filename="instrumentos.xlsx"'
+    wb.save(response)
+    return response
+
+def export_instrumentos_pdf(request):
+    instrumentos = Instrumento.objects.all()
+
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = 'attachment; filename="instrumentos.pdf"'
+
+    p = canvas.Canvas(response, pagesize=landscape(letter))
+    width, height = landscape(letter)
+
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(30, height - 40, "Lista de Instrumentos")
+
+    data = [["Nombre", "Tipo", "Fecha de Alta", "Fecha de Baja", "Activo"]]
+
+    for instrumento in instrumentos:
+        data.append([
+            instrumento.nombre,
+            instrumento.id_tipo.nombre_tipo,
+            instrumento.fecha_alta.strftime("%d/%m/%Y") if instrumento.fecha_alta else "-",
+            instrumento.fecha_baja.strftime("%d/%m/%Y") if instrumento.fecha_baja else "-",
+            "Sí" if instrumento.activo else "No"
+        ])
+
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.gray),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+        ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+        ("GRID", (0, 0), (-1, -1), 1, colors.black),
+    ]))
+
+    table.wrapOn(p, width, height)
+    table.drawOn(p, 30, height - 100 - (len(data) * 20))
+
+    p.showPage()
+    p.save()
+    return response

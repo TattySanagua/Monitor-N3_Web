@@ -1,10 +1,41 @@
 {% extends 'base.html' %}
-
 {% block title %}Instrumentos{% endblock %}
-
 {% block content %}
+
 <div class="container mt-4">
     <h2 class="mb-3">Lista de Instrumentos</h2>
+
+    <!-- Filtros por nombre y tipo -->
+    <form method="GET" id="filtro-form" class="row g-3 mb-3">
+        <div class="col-md-4">
+            <label for="nombre" class="form-label">Nombre del Instrumento</label>
+            <input type="text" class="form-control" id="nombre" name="nombre" value="{{ nombre_filtro }}">
+        </div>
+        <div class="col-md-4">
+            <label for="tipo" class="form-label">Tipo de Instrumento</label>
+            <select class="form-control" id="tipo" name="tipo">
+                <option value="">Todos</option>
+                {% for tipo in tipos_instrumento %}
+                    <option value="{{ tipo }}" {% if tipo == tipo_filtro %}selected{% endif %}>{{ tipo }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4 align-self-end">
+            <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filtrar</button>
+            <a href="{% url 'instrumento_tabla' %}" class="btn btn-secondary"><i class="fas fa-times"></i> Limpiar</a>
+        </div>
+    </form>
+
+    <div class="mb-3 d-flex justify-content-end">
+        <a href="{% url 'export_instrumentos_excel' %}" class="btn btn-success btn-sm mx-1">
+            <i class="fas fa-file-excel"></i> Exportar Excel
+        </a>
+        <a href="{% url 'export_instrumentos_pdf' %}" class="btn btn-danger btn-sm mx-1">
+            <i class="fas fa-file-pdf"></i> Exportar PDF
+        </a>
+    </div>
+
+    <!-- Tabla -->
     <table class="table table-bordered table-striped text-center">
         <thead class="table-dark">
             <tr>

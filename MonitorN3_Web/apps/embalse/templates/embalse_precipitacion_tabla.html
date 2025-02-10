@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Tabla de Embalse{% endblock %}
+{% block content %}
+    <div class="container mt-4">
+        <h2 class="text-center">Tabla de Niveles de Embalse y Precipitaciones</h2>
+
+        <!-- Filtro por fecha -->
+        <form method="GET" class="row g-3 mb-3">
+            <div class="col-md-3">
+                <label for="fecha_inicio" class="form-label">Desde:</label>
+                <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio }}" class="form-control">
+            </div>
+            <div class="col-md-3">
+                <label for="fecha_fin" class="form-label">Hasta:</label>
+                <input type="date" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin }}" class="form-control">
+            </div>
+            <div class="col-md-3 align-self-end">
+                <button type="submit" class="btn btn-primary">Filtrar</button>
+            </div>
+            <!-- Exportación -->
+            <div class="d-flex justify-content-end mb-3">
+                <a href="{% url 'export_embalse_excel' %}" class="btn btn-success mx-2">
+                    <i class="fas fa-file-excel"></i> Exportar Excel
+                </a>
+                <a href="{% url 'export_embalse_pdf' %}" class="btn btn-danger">
+                    <i class="fas fa-file-pdf"></i> Exportar PDF
+                </a>
+            </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped text-center">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Nivel Embalse</th>
+                        <th colspan="4">Precipitaciones [mm]</th>
+                    </tr>
+                    <tr>
+                        <th>dd-mm-YYYY</th>
+                        <th>[msnm]</th>
+                        <th>Del Día</th>
+                        <th>3 Días Antes</th>
+                        <th>5 Días Antes</th>
+                        <th>10 Días Antes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fila in datos_tabla %}
+                        <tr>
+                            <td>{{ fila.fecha }}</td>
+                            <td>{{ fila.nivel_embalse }}</td>
+                            <td>{{ fila.precipitaciones.del_dia }}</td>
+                            <td>{{ fila.precipitaciones.tres_dias }}</td>
+                            <td>{{ fila.precipitaciones.cinco_dias }}</td>
+                            <td>{{ fila.precipitaciones.diez_dias }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No hay datos disponibles en este rango.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
