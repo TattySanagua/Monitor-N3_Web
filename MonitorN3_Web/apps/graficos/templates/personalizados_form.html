@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block title %}Gráficos Personalizados{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">Generar Gráfico Personalizado</h2>
+    <div class="form-container">
+        <form id="form-grafico" method="POST" action="{% url 'generar_grafico' %}" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <div class="form-group">
+            {{ personalizados_form.tipo_grafico.label_tag }}
+            {{ personalizados_form.tipo_grafico }}
+        </div>
+
+        <div class="form-group">
+            {{ personalizados_form.eje_x.label_tag }}
+            {{ personalizados_form.eje_x }}
+        </div>
+
+        <div class="form-group" id="instrumento-x-container" style="display: none;">
+            {{ personalizados_form.instrumento_x.label_tag }}
+            {{ personalizados_form.instrumento_x }}
+        </div>
+
+        <div class="form-group">
+            {{ personalizados_form.eje_y.label_tag }}
+            {{ personalizados_form.eje_y }}
+        </div>
+
+        <div class="form-group" id="instrumento-y-container" style="display: none;">
+            {{ personalizados_form.instrumento_y.label_tag }}
+            {{ personalizados_form.instrumento_y }}
+        </div>
+
+        <div class="form-check">
+            {{ personalizados_form.agregar_eje_y_secundario }}
+            <label class="form-check-label">
+                Agregar Eje Y Secundario
+            </label>
+        </div>
+
+        <div class="form-group" id="tipo-grafico-y2-container" style="display: none;">
+            {{ personalizados_form.tipo_grafico_y2.label_tag }}
+            {{ personalizados_form.tipo_grafico_y2 }}
+        </div>
+
+        <div class="form-group" id="eje-y-secundario-container" style="display: none;">
+            {{ personalizados_form.eje_y_secundario.label_tag }}
+            {{ personalizados_form.eje_y_secundario }}
+        </div>
+
+        <div class="form-group" id="instrumento-y2-container" style="display: none;">
+            {{ personalizados_form.instrumento_y2.label_tag }}
+            {{ personalizados_form.instrumento_y2 }}
+        </div>
+
+        <div class="button-container text-center">
+            <button type="submit" class="btn btn-primary">Graficar</button>
+        </div>
+    </form>
+    </div>
+    <div id="grafico-container" class="mt-5"></div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    $("#id_instrumento_x, #id_instrumento_y, #id_instrumento_y2").select2({
+        placeholder: "Seleccione instrumentos...",
+        allowClear: true,
+        width: "100%"
+    });
+    //Obtener elementos del formulario
+    const ejeX = document.getElementById("id_eje_x");
+    const ejeY = document.getElementById("id_eje_y");
+    const ejeY2 = document.getElementById("id_eje_y_secundario");
+    const checkboxY2 = document.getElementById("id_agregar_eje_y_secundario");
+
+    const instrumentoXContainer = document.getElementById("instrumento-x-container");
+    const instrumentoYContainer = document.getElementById("instrumento-y-container");
+    const instrumentoY2Container = document.getElementById("instrumento-y2-container");
+    const ejeY2Container = document.getElementById("eje-y-secundario-container");
+    const tipoGraficoY2Container = document.getElementById("tipo-grafico-y2-container");
+
+    //Datos JSON con los instrumentos disponibles
+    const instrumentos = {
+        "nivel_piezometrico": JSON.parse('{{ piezometros_json|default:"[]"|escapejs }}'),
+        "nivel_freatico": JSON.parse('{{ freatimetros_json|default:"[]"|escapejs }}'),
+        "caudal": JSON.parse('{{ aforadores_json|default:"[]"|escapejs }}')
+    };
+
+    function actualizarInstrumentos(select, container) {
+        const valor = select.value;
+        const selectElem = container.querySelector("select");
+        if (instrumentos[valor]) {
+            container.style.display = "block";
+            selectElem.innerHTML = ''; // Limpiar opciones anteriores
+            instrumentos[valor].forEach(inst => {
+                let option = new Option(inst.nombre, inst.id, false, false);
+                selectElem.appendChild(option);
+            });
+            $(selectElem).trigger('change');
+        } else {
+            container.style.display = "none";
+            $(selectElem).val(null).trigger('change');
+        }
+    }
+
+    //Eventos para actualizar los select de instrumentos cuando cambian los valores de los ejes
+    ejeX.addEventListener("change", function() {
+        actualizarInstrumentos(ejeX, instrumentoXContainer);
+    });
+
+    ejeY.addEventListener("change", function() {
+        actualizarInstrumentos(ejeY, instrumentoYContainer);
+    });
+
+    checkboxY2.addEventListener("change", function() {
+        if (checkboxY2.checked) {
+            ejeY2Container.style.display = "block";
+            tipoGraficoY2Container.style.display = "block";
+        } else {
+            ejeY2Container.style.display = "none";
+            instrumentoY2Container.style.display = "none";
+            tipoGraficoY2Container.style.display = "none";
+        }
+    });
+
+    ejeY2.addEventListener("change", function() {
+        actualizarInstrumentos(ejeY2, instrumentoY2Container);
+    });
+
+    //Enviar formulario con AJAX y mostrar el gráfico
+    document.getElementById("form-grafico").addEventListener("submit", function(event) {
+        event.preventDefault();
+
+        let formData = new FormData(this);
+        let data = {};
+
+        formData.forEach((value, key) => {
+            if (data[key]) {
+                if (!Array.isArray(data[key])) {
+                    data[key] = [data[key]];
+                }
+                data[key].push(value);
+            } else {
+                data[key] = value;
+            }
+        });
+
+        fetch("{% url 'generar_grafico' %}", {
+            method: "POST",
+            body: new URLSearchParams(formData),
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+        })
+            .then(response => {
+
+            if (!response.ok) {
+                throw new Error(`❌ Error en la respuesta: ${response.status}`);
+            }
+            return response.json();
+        })
+            .then(data => {
+            if (data.grafico) {
+                const graficoContainer = document.getElementById("grafico-container");
+                graficoContainer.innerHTML = data.grafico;
+
+                //Ejecutar scripts del gráfico
+                const scripts = graficoContainer.querySelectorAll('script');
+                scripts.forEach(script => {
+                    eval(script.innerHTML);
+                });
+            } else {
+                alert("❌ Error en la respuesta: " + JSON.stringify(data.error));
+            }
+        })
+            .catch(error => console.error("❌ Error en la solicitud:", error));
+    });
+});
+</script>
+
+{% endblock %}
+
+
+

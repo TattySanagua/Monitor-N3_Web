@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Gráficos Predefinidos</h2>
+    <div class="form-container">
+        <form method="post" action="{% url 'predefinidos_grafico' %}">
+        {% csrf_token %}
+        <label for="grafico">Selecciona un gráfico:</label>
+        <select name="grafico_seleccionado" id="grafico">
+            {% for key, value in graficos.items %}
+                <option value="{{ key }}">{{ value }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Generar Gráfico</button>
+    </form>
+    </div>
+    {% if grafico %}
+        <div>{{ grafico|safe }}</div>
+    {% endif %}
+</div>
+{% endblock %}
