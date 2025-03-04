@@ -3,34 +3,25 @@
 {% block content %}
     <div class="container mt-4">
         <h2 class="text-center">Tabla de Niveles de Embalse y Precipitaciones</h2>
+        <br>
 
-        <!-- Filtro por fecha -->
-        <form method="GET" class="row g-3 mb-3">
-            <div class="col-md-3">
-                <label for="fecha_inicio" class="form-label">Desde:</label>
-                <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio }}" class="form-control">
-            </div>
-            <div class="col-md-3">
-                <label for="fecha_fin" class="form-label">Hasta:</label>
-                <input type="date" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin }}" class="form-control">
-            </div>
-            <div class="col-md-3 align-self-end">
-                <button type="submit" class="btn btn-primary">Filtrar</button>
-            </div>
-            <!-- Exportación -->
-            <div class="d-flex justify-content-end mb-3">
-                <a href="{% url 'export_embalse_excel' %}" class="btn btn-success mx-2">
-                    <i class="fas fa-file-excel"></i> Exportar Excel
-                </a>
-                <a href="{% url 'export_embalse_pdf' %}" class="btn btn-danger">
-                    <i class="fas fa-file-pdf"></i> Exportar PDF
-                </a>
-            </div>
-        </form>
+        <!-- Filtro de Fechas -->
+        {% include "filtro_fecha.html" %}
 
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped text-center">
-                <thead class="table-dark">
+        <!-- Exportación -->
+        <div class="d-flex justify-content-end mb-3">
+            <a href="{% url 'export_embalse_excel' %}" class="btn btn-success mx-2">
+                <i class="fas fa-file-excel"></i> <i class="fas fa-download"></i>
+            </a>
+            <a href="{% url 'export_embalse_pdf' %}" class="btn btn-danger">
+                <i class="fas fa-file-pdf"></i> <i class="fas fa-download"></i>
+            </a>
+        </div>
+
+        <!-- Tabla -->
+        <div class="table-responsive mi-tabla">
+            <table class="table table-bordered table-striped text-center table-hover mi-tabla-tabla">
+                <thead class="table-dark mi-tabla-thead">
                     <tr>
                         <th>Fecha</th>
                         <th>Nivel Embalse</th>

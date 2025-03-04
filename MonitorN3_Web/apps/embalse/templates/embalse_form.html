@@ -1,16 +1,103 @@
 {% extends 'base.html' %}
 {% block title %}Embalse{% endblock %}
 {% block content %}
-    <header>
-        <h1>Registrar Nivel de Embalse</h1>
-    </header>
-    <div class="form-container">
-        <form action="{% url 'nivelembalse' %}" method="POST">
-            {% csrf_token %}
-            {{ embalse_form.as_p }}
-            <div class="button-container">
-                <button type="submit">Guardar</button>
-            </div>
-        </form>
+<header>
+    <h1>Registrar Nivel de Embalse</h1>
+</header>
+<br>
+
+<div class="form-container" style="color:black;">
+    <form id="nivelembalse-form" method="POST">
+        {% csrf_token %}
+        {{ embalse_form.as_p }}
+        <div style="text-align: center; ">
+                <button class="boton">Guardar</button>
+                <style>
+                        .boton {
+                            background-color: #004080;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 20px;
+                            cursor: pointer;
+                            transition: background-color 0.3s ease;
+                        }
+
+                        .boton:hover {
+                            background-color: #0057AAFF;
+                            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+                        }
+                    </style>
+                </div>
+
+    </form>
+</div>
+
+<!-- Toast -->
+<div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="toast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toast-message"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
     </div>
+</div>
+<br>
+<p style="color:#b3b3b3">*Las mediciones del <b>Nivel de Embalse</b> se realizan mediante un sensor eléctrico de nivel,
+instalado aguas arriba de las compuertas de la torre de toma para la Central. El
+sensor de inmersión es un dispositivo de alta precisión (0,05 %) con un rango
+variable entre 0 y 20 m.c.a. y está conectado a la unidad electrónica de
+procesamiento ubicada dentro del edificio de compuertas. El valor medido es
+transmitido por un modem RAD de fibra óptica hasta el edificio de la Central. La
+frecuencia de medición es diaria y su clasificación es <b>A - Sistema de control
+permanente.</b></p>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+
+    let form = document.getElementById("nivelembalse-form");
+    if (!form) {
+        console.error("No se encontró el formulario");
+        return;
+    }
+
+    form.addEventListener("submit", function(event) {
+        event.preventDefault();
+        console.log("📤 Enviando datos...");
+
+        let formData = new FormData(this);
+
+        fetch("{% url 'nivelembalse' %}", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+
+            // Mostrar mensaje en el Toast
+            let toastElement = document.getElementById("toast");
+            let toastMessage = document.getElementById("toast-message");
+            let toastContainer = new bootstrap.Toast(toastElement);
+
+            if (data.success) {
+                toastElement.classList.remove("bg-danger");
+                toastElement.classList.add("bg-success");
+            } else {
+                toastElement.classList.remove("bg-success");
+                toastElement.classList.add("bg-danger");
+            }
+
+            toastMessage.innerText = data.message;
+            toastContainer.show();
+
+            if (data.success) {
+                form.reset();
+            }
+        })
+        .catch(error => console.error("Error en la solicitud:", error));
+    });
+});
+</script>
 {% endblock %}

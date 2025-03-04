@@ -11,4 +11,5 @@ urlpatterns = [
     path('instrumento/', include('apps.instrumento.urls')),
     path('medicion/', include('apps.medicion.urls')),
     path('graficos/', include('apps.graficos.urls')),
+    path('presa/', include('apps.presa.urls')),
 ]

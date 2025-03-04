@@ -1,4 +1,5 @@
 import json, math
+from datetime import datetime
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from decimal import Decimal, InvalidOperation
@@ -50,11 +51,12 @@ def piezometro_guardar(request):
             medicion = form.save(commit=False)
             medicion.valor = request.POST.get('nivel_piezometrico')
             medicion.save()
-            return redirect('piezometro_calcular')
+            return JsonResponse({"success": True, "message": "✅ Nivel piezométrico guardado correctamente."})
         else:
-            return render(request, 'medicion_piezometro_form.html', {'medicion_piezometro_form': form})
-    else:
-        return JsonResponse({'error': 'Solicitud no válida'}, status=400)
+            return JsonResponse({"success": False, "message": "❌ Error al guardar la medición. Verifica los datos."})
+
+    return JsonResponse({"success": False, "message": "❌ Solicitud no válida."})
+
 
 def freatimetro_calcular(request):
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -91,13 +93,25 @@ def freatimetro_guardar(request):
         form = MedicionFreatimetroForm(request.POST)
         if form.is_valid():
             medicion = form.save(commit=False)
-            medicion.valor = request.POST.get('nivel_freatico')
-            medicion.save()
-            return redirect('freatimetro_calcular')
+            nivel_freatico = request.POST.get('nivel_freatico')
+
+            if nivel_freatico:
+                try:
+                    medicion.valor = float(nivel_freatico)
+                    medicion.save()
+                    return JsonResponse({"success": True, "message": "✅ Nivel freático guardado correctamente."})
+                except ValueError:
+                    return JsonResponse(
+                        {"success": False, "message": "❌ Error: El nivel freático debe ser un número válido."},
+                        status=400)
+            else:
+                return JsonResponse(
+                    {"success": False, "message": "❌ Error: No se encontró el nivel freático calculado."}, status=400)
         else:
-            return render(request, 'medicion_freatimetro_form.html', {'medicion_freatimetro_form': form})
-    else:
-        return JsonResponse({'error': 'Solicitud no válida'}, status=400)
+            return JsonResponse({"success": False, "message": "❌ Error: Datos inválidos en el formulario."}, status=400)
+
+    return JsonResponse({"success": False, "message": "❌ Solicitud no válida."}, status=400)
+
 
 def afovolumetrico_calcular(request):
     if request.method == 'POST':
@@ -136,14 +150,15 @@ def afovolumetrico_guardar(request):
             try:
                 medicion.valor = Decimal(q_promedio)
                 medicion.save()
-                return redirect('afovolumetrico_calcular')
+                return JsonResponse({"success": True, "message": "✅ Caudal guardado correctamente."})
             except (InvalidOperation, TypeError):
-                return JsonResponse({'error': 'El caudal promedio debe ser un número válido.'}, status=400)
-
+                return JsonResponse(
+                    {"success": False, "message": "❌ Error: El caudal promedio debe ser un número válido."}, status=400)
         else:
-            return render(request, 'medicion_afovolumetrico_form.html', {'medicion_afovolumetrico_form': form})
-    else:
-        return JsonResponse({'error': 'Solicitud no válida'}, status=400)
+            return JsonResponse({"success": False, "message": "❌ Error: Datos inválidos en el formulario."}, status=400)
+
+    return JsonResponse({"success": False, "message": "❌ Solicitud no válida."}, status=400)
+
 
 def afoparshall_calcular(request):
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -181,27 +196,48 @@ def afoparshall_guardar(request):
         form = MedicionAforadorParshall(request.POST)
         if form.is_valid():
             medicion = form.save(commit=False)
-
             caudal_calculado = request.POST.get('caudal_calculado')
 
             if caudal_calculado:
-                medicion.valor = caudal_calculado
-                medicion.save()
-                messages.success(request, 'Medición guardada exitosamente.')
-                return redirect('afoparshall_calcular')
+                try:
+                    medicion.valor = float(caudal_calculado)
+                    medicion.save()
+                    return JsonResponse({"success": True, "message": "✅ Caudal guardado correctamente."})
+                except ValueError:
+                    return JsonResponse({"success": False, "message": "❌ Error: El caudal debe ser un número válido."},
+                                        status=400)
             else:
-                return JsonResponse({'error': 'El caudal calculado no fue encontrado.'}, status=400)
+                return JsonResponse({"success": False, "message": "❌ Error: No se encontró el caudal calculado."},
+                                    status=400)
         else:
-            return render(request, 'medicion_afoparshall_form.html', {'form': form})
-    else:
-        return JsonResponse({'error': 'Solicitud no válida'}, status=400)
+            return JsonResponse({"success": False, "message": "❌ Error: Datos inválidos en el formulario."}, status=400)
 
-def piezometro_tabla(request):
-    piezometros = Instrumento.objects.filter(id_tipo__nombre_tipo="PIEZÓMETRO")
+    return JsonResponse({"success": False, "message": "❌ Solicitud no válida."}, status=400)
 
-    mediciones = Medicion.objects.filter(id_instrumento__in=piezometros).order_by('-fecha')
-    niveles_embalse = Embalse.objects.all().order_by('-fecha')
 
+def obtener_datos_tabla(tipo_instrumento, template, request):
+    fecha_inicio = request.GET.get("fecha_inicio", "")
+    fecha_fin = request.GET.get("fecha_fin", "")
+
+    filtros_mediciones = {}
+    filtros_niveles = {}
+
+    if fecha_inicio:
+        filtros_mediciones["fecha__gte"] = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+        filtros_niveles["fecha__gte"] = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+
+    if fecha_fin:
+        filtros_mediciones["fecha__lte"] = datetime.strptime(fecha_fin, "%Y-%m-%d")
+        filtros_niveles["fecha__lte"] = datetime.strptime(fecha_fin, "%Y-%m-%d")
+
+    # Filtrar instrumentos según el tipo
+    instrumentos = Instrumento.objects.filter(id_tipo__nombre_tipo__icontains=tipo_instrumento)
+
+    # Obtener mediciones y niveles de embalse
+    mediciones = Medicion.objects.filter(id_instrumento__in=instrumentos, **filtros_mediciones).order_by('-fecha')
+    niveles_embalse = Embalse.objects.filter(**filtros_niveles).order_by('-fecha')
+
+    # Construcción de datos de la tabla
     datos_tabla = {}
 
     for nivel in niveles_embalse:
@@ -220,85 +256,27 @@ def piezometro_tabla(request):
         datos_tabla[fecha][instrumento] = valor
 
     fechas = sorted(datos_tabla.keys(), reverse=True)
-    nombres_piezometros = [p.nombre for p in piezometros]
+    nombres_instrumentos = [i.nombre for i in instrumentos]
 
     contexto = {
         "fechas": fechas,
-        "nombres_piezometros": nombres_piezometros,
+        "nombres_aforadores" if tipo_instrumento == "AFORADOR" else "nombres_piezometros" if tipo_instrumento == "PIEZÓMETRO" else "nombres_freatimetros": nombres_instrumentos,
         "datos_tabla": datos_tabla,
+        "fecha_inicio": fecha_inicio,
+        "fecha_fin": fecha_fin,
     }
 
-    return render(request, "piezometro_tabla.html", contexto)
-
-def freatimetro_tabla(request):
-
-    freatimetros = Instrumento.objects.filter(id_tipo__nombre_tipo="FREATÍMETRO")
-
-    mediciones = Medicion.objects.filter(id_instrumento__in=freatimetros).order_by('-fecha')
-    niveles_embalse = Embalse.objects.all().order_by('-fecha')
-
-    datos_tabla = {}
-
-    for nivel in niveles_embalse:
-        fecha = nivel.fecha.strftime("%d-%m-%Y")
-        if fecha not in datos_tabla:
-            datos_tabla[fecha] = {"nivel_embalse": nivel.nivel_embalse}
-
-    for medicion in mediciones:
-        fecha = medicion.fecha.strftime("%d-%m-%Y")
-        instrumento = medicion.id_instrumento.nombre
-        valor = medicion.valor
-
-        if fecha not in datos_tabla:
-            datos_tabla[fecha] = {"nivel_embalse": "-"}
-
-        datos_tabla[fecha][instrumento] = valor
-
-    fechas = sorted(datos_tabla.keys(), reverse=True)
-    nombres_freatimetros = [f.nombre for f in freatimetros]
-
-    contexto = {
-        "fechas": fechas,
-        "nombres_freatimetros": nombres_freatimetros,
-        "datos_tabla": datos_tabla,
-    }
-
-    return render(request, "freatimetro_tabla.html", contexto)
+    return render(request, template, contexto)
 
 def aforador_tabla(request):
+    return obtener_datos_tabla("AFORADOR", "aforador_tabla.html", request)
 
-    aforadores = Instrumento.objects.filter(id_tipo__nombre_tipo__icontains="AFORADOR")
+def piezometro_tabla(request):
+    return obtener_datos_tabla("PIEZÓMETRO", "piezometro_tabla.html", request)
 
-    mediciones = Medicion.objects.filter(id_instrumento__in=aforadores).order_by('-fecha')
-    niveles_embalse = Embalse.objects.all().order_by('-fecha')
+def freatimetro_tabla(request):
+    return obtener_datos_tabla("FREATÍMETRO", "freatimetro_tabla.html", request)
 
-    datos_tabla = {}
-
-    for nivel in niveles_embalse:
-        fecha = nivel.fecha.strftime("%d-%m-%Y")
-        if fecha not in datos_tabla:
-            datos_tabla[fecha] = {"nivel_embalse": nivel.nivel_embalse}
-
-    for medicion in mediciones:
-        fecha = medicion.fecha.strftime("%d-%m-%Y")
-        instrumento = medicion.id_instrumento.nombre
-        valor = medicion.valor
-
-        if fecha not in datos_tabla:
-            datos_tabla[fecha] = {"nivel_embalse": "-"}
-
-        datos_tabla[fecha][instrumento] = valor
-
-    fechas = sorted(datos_tabla.keys(), reverse=True)
-    nombres_aforadores = [a.nombre for a in aforadores]
-
-    contexto = {
-        "fechas": fechas,
-        "nombres_aforadores": nombres_aforadores,
-        "datos_tabla": datos_tabla,
-    }
-
-    return render(request, "aforador_tabla.html", contexto)
 
 def export_instrumento_excel(request, instrumentos, filename, sheet_title):
     wb = openpyxl.Workbook()
@@ -340,6 +318,7 @@ def export_instrumento_excel(request, instrumentos, filename, sheet_title):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     wb.save(response)
     return response
+
 
 def export_piezometro_excel(request):
     piezometros = Instrumento.objects.filter(id_tipo__nombre_tipo="PIEZÓMETRO")
@@ -414,7 +393,6 @@ def export_instrumento_pdf(request, instrumentos, filename, titulo):
 def export_piezometro_pdf(request):
     piezometros = Instrumento.objects.filter(id_tipo__nombre_tipo="PIEZÓMETRO")
     return export_instrumento_pdf(request, piezometros, "piezometro_mediciones.pdf", "Piezómetros")
-
 
 def export_freatimetro_pdf(request):
     freatimetros = Instrumento.objects.filter(id_tipo__nombre_tipo="FREATÍMETRO")

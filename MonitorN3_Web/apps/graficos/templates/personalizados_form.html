@@ -4,8 +4,10 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="text-center">Generar Gráfico Personalizado</h2>
-    <div class="form-container">
+    <h2 class="text-center">Gráfico Personalizado</h2>
+    <br>
+
+    <div class="form-container" style="color:black;">
         <form id="form-grafico" method="POST" action="{% url 'generar_grafico' %}" enctype="multipart/form-data">
         {% csrf_token %}
 
@@ -33,6 +35,7 @@
             {{ personalizados_form.instrumento_y.label_tag }}
             {{ personalizados_form.instrumento_y }}
         </div>
+        <br>
 
         <div class="form-check">
             {{ personalizados_form.agregar_eje_y_secundario }}
@@ -40,7 +43,7 @@
                 Agregar Eje Y Secundario
             </label>
         </div>
-
+        <br>
         <div class="form-group" id="tipo-grafico-y2-container" style="display: none;">
             {{ personalizados_form.tipo_grafico_y2.label_tag }}
             {{ personalizados_form.tipo_grafico_y2 }}
@@ -56,9 +59,26 @@
             {{ personalizados_form.instrumento_y2 }}
         </div>
 
-        <div class="button-container text-center">
-            <button type="submit" class="btn btn-primary">Graficar</button>
-        </div>
+        <br>
+        <div style="text-align: center; ">
+                <button class="boton">Graficar</button>
+                <style>
+                        .boton {
+                            background-color: #004080;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 20px;
+                            cursor: pointer;
+                            transition: background-color 0.3s ease;
+                        }
+
+                        .boton:hover {
+                            background-color: #0057AAFF;
+                            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+                        }
+                    </style>
+                </div>
     </form>
     </div>
     <div id="grafico-container" class="mt-5"></div>

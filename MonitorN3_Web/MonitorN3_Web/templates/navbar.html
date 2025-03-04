@@ -6,8 +6,19 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Inicio</a></li>
 
+                    <!-- Inicio -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarInicio" role="button" data-bs-toggle="dropdown">Inicio</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'index' %}">Principal</a></li>
+                            <li><a class="dropdown-item" href="{% url 'generalidades' %}">Generalidades</a></li>
+                            <li><a class="dropdown-item" href="{% url 'descripcion' %}">Descripción de la Obra</a></li>
+                            <li><a class="dropdown-item" href="{% url 'dispositivos' %}">Dispositivos de Control</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Embalse -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarEmbalse" role="button" data-bs-toggle="dropdown">Embalse</a>
                         <ul class="dropdown-menu">

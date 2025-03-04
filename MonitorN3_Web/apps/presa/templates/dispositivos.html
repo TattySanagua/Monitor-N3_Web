@@ -1,0 +1,247 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">Dispositivos de Control de la Presa Lateral N°3</h2><br>
+    <p>Con el objetivo de facilitar la detección temprana de anomalías y establecer un
+ordenamiento respecto del grado de importancia de cada parámetro en relación,
+fundamentalmente, a las condiciones de estabilidad de las diferentes obras que componen
+el aprovechamiento, se establece en este punto una clasificación de los diferentes
+dispositivos y parámetros a controlar. Se ha establecido una primera clasificación que
+contempla el grado de vinculación del parámetro de referencia con las condiciones de
+estabilidad directa de la obra o con sus condiciones de funcionamiento.</p>
+    <p><b>Categoría A (Instrumentos detectores):</b> aquellos dispositivos cuyo parámetro a medir se encuentra vinculado en forma
+directa a las condiciones de seguridad de la obra. La información proporcionada de estos
+dispositivos debe poseer un grado elevado de confiabilidad, para lo cual deben priorizarse
+aquellos trabajos que aseguren su correcto funcionamiento bajo cualquier circunstancia.</p>
+    <p><b>Categoría B (Instrumentos de Apoyo):</b>  aquellos dispositivos que completan la descripción de un determinado parámetro en
+ciertos sectores de la obra, o bien están referidos a estructuras anexas en las cuales el
+desarrollo de alguna anomalía no afectaría, en forma directa, las condiciones de seguridad
+de las estructuras de cierre. Permiten mantener bajo observación a aquellos otros
+parámetros que, si bien importantes, no están vinculados directamente a las condiciones de
+seguridad inmediatas.</p>
+    <p><b>Categoría C:</b>
+Incluye a aquellos dispositivos cuyo parámetro bajo medición no aporta información
+significativa en relación a las condiciones de seguridad de la obra en la actualidad. En
+general resultan parámetros vinculados a la verificación de ciertas hipótesis de proyecto y
+que, luego de más de 30 años de servicio, pueden considerarse superadas. </p>
+    <p><b>Categoría D: </b>
+Aquellos instrumentos que no son confiables o están fuera de servicio.</p>
+    <p>Para el monitoreo y control de la presa, se emplean diferentes instrumentos de auscultación:</p>
+    <br>
+    <h3>Piezómetros</h3>
+    <p>Con el propósito de determinar las presiones de poros en el contacto de la presa lateral N°3
+con la roca y dentro de la misma roca de fundación en el año 2007 se instalaron 4 (cuatro)
+piezómetros tipo Casagrande y posteriormente a principio del 01/2017 la empresa
+Geoservice SRL realizó la instalación de 3 (tres) nuevos piezómetros tipo Casagrande,
+ubicados en los márgenes de la presa a nivel de coronamiento</p>
+
+   <p><b>Medición:</b> El proceso de medición y determinación de la magnitud física depende del nivel de agua
+dentro del tubo piezométrico. Cuando el nivel del agua se encuentra sobre el nivel de
+captación y no supera la cota de boca del instrumento, la lectura se efectúa por medio de
+una sonda electroacústica. Esta sonda al entrar en contacto con el agua cierra el circuito
+eléctrico y acciona una señal sonora y una luminosa. Para obtener lecturas de mayor
+precisión en la proximidad del nivel de agua se efectúa un movimiento ascendente
+descendente, lo que permite a través del sonido, determinar el nivel, el cual se lee en el
+cable graduado. En algunas ocasiones, cuando la punta detectora se cubre de partículas
+húmedas, se acciona la señal sin la presencia real del agua. Por esto se aconseja realizar
+una limpieza cuidadosa de la punta antes de efectuar  cada lectura. Si una vez realizada la
+lectura existieran dudas sobre ésta, la punta debe limpiarse nuevamente y la medición debe
+repetirse.
+Cuando el nivel piezómetrico (NP) supera la cota de boca del tubo del instrumento, la lectura
+se realiza a través de un manómetro de presión. </p>
+
+   <p> Lectura registrada con sonda electroacústica (NP inferior a la cota de boca del instrumento): </p>
+    <br>
+    <p><b>N𝑃 =𝐶𝐵−[(−cos𝛼) 𝑥 𝐿] </b></p>
+    <br>
+   <p> NP = Nivel Piezométrico [msnm].</p>
+<p>CB = Cota superior del tubo de elevación [msnm].</p>
+<p>L = Lectura registrada con la sonda electroacústica [m].</p>
+<p>α = ángulo cenital de instalación, en grados </p>
+    <br>
+    <p>Los piezómetros instalados en la presa lateral n°3 son del tipo
+de tubo abierto, denominados piezómetros Casagrande,
+instalados en el interior de una perforación vertical y con una
+cámara de captación en su extremo inferior. El tubo es del tipo
+polietileno de alta densidad. El sector inferior del tubo se
+encuentra ranurado en una longitud de 0,40 m conformando
+así el área de captación. La totalidad del sector ranurado está
+cubierta con dos vueltas de  geotextil.</p>
+    <br>
+    <div class="text-center">
+        {% load static %}
+        <img src="{% static 'img/piezometro_casagrande.webp' %}" alt="Piezometro Casagrande" style="width: 20%; border-radius: 10px;">
+    </div><br>
+    <table class="table table-striped table-bordered text-center" style="text-align: center; vertical-align: middle;">
+        <thead>
+            <tr>
+                <th>Denominación</th>
+                <th>Categoría</th>
+                <th>Ubicación</th>
+                <th>Cota de Instalación C.I. (msnm)</th>
+                <th>Cota de Boca C.B. (msnm)</th>
+                <th>Frecuencia de Medición</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>L3-PC1</td>
+                <td>A</td>
+                <td>Fundación MI</td>
+                <td>586,49</td>
+                <td>605,22</td>
+                <td>Semanal</td>
+            </tr>
+            <tr>
+                <td>L3-PC2</td>
+                <td>A</td>
+                <td>Fundación</td>
+                <td>585,94</td>
+                <td>604,24</td>
+                <td>Semanal</td>
+            </tr>
+            <tr>
+                <td>L3-PC3</td>
+                <td>A</td>
+                <td>Fundación MD</td>
+                <td>586,24</td>
+                <td>603,88</td>
+                <td>Semanal</td>
+            </tr>
+            <tr>
+                <td>L3-PC4</td>
+                <td>A</td>
+                <td>Fundación</td>
+                <td>579,31</td>
+                <td>600,60</td>
+                <td>Semanal</td>
+            </tr>
+            <tr>
+                <td>L3-PC5</td>
+                <td>A</td>
+                <td>Estribo MI</td>
+                <td>600,01</td>
+                <td>616,32</td>
+                <td>Semanal</td>
+            </tr>
+            <tr>
+                <td>L3-PC6</td>
+                <td>A</td>
+                <td>Fundación MI</td>
+                <td>595,95</td>
+                <td>616,17</td>
+                <td>Semanal</td>
+            </tr>
+            <tr>
+                <td>L3-PC7</td>
+                <td>A</td>
+                <td>Estribo MD</td>
+                <td>603,97</td>
+                <td>616,02</td>
+                <td>Semanal</td>
+            </tr>
+        </tbody>
+    </table>
+    <br>
+    <h3>Freatímetro</h3>
+    <table class="table table-striped table-bordered text-center">
+        <thead>
+            <tr>
+                <th>Denominación</th>
+                <th>Categoría</th>
+                <th>Ubicación</th>
+                <th>Cota de Instalación C.I. (msnm)</th>
+                <th>Cota de Boca C.B. (msnm)</th>
+                <th>Frecuencia de Medición</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>L3-F1</td>
+                <td>B</td>
+                <td>Pie de Presa - Sector Central</td>
+                <td>595,06</td>
+                <td>599,07</td>
+                <td>Semanal</td>
+            </tr>
+
+        </tbody>
+    </table>
+    <br>
+    <p>Ubicación de Piezómetros y Freatímetro:</p>
+    <br>
+    <div class="text-center">
+        {% load static %}
+        <img src="{% static 'img/piezometros_ubicacion.webp' %}" alt="Ubicación de Piezometros" style="width: 50%; border-radius: 10px;">
+    </div>
+    <br><br>
+    <h3>Aforadores</h3>
+    <br>
+    <p>En el sector de la Presa Lateral N°3 se produce una importante acumulación de agua
+producto de filtraciones a través de la fundación de la presa y del agua proveniente
+de la lluvia sobre las laderas que rodean la laguna debido a la presencia de un
+camino que actúa de barrera al drenaje natural. A fin de monitorear la evolución de
+los caudales de filtración se instaló una cámara aforadora en la zona de descarga de
+la laguna. El aforador AFo3-PP se ubica a pie de presa y el AFo3-TOT aguas arriba
+de la alcantarilla construida en el camino, ambos actúan como totalizador de
+filtraciones a través de la presa. Las filtraciones provenientes de estribo de MI, son
+captadas por el aforador denominado Afo3-EI y se suman a las del aforo del pie. </p>
+    <br>
+    <table class="table table-striped table-bordered text-center" style="text-align: center; vertical-align: middle;">
+        <thead>
+            <tr>
+                <th>Denominación</th>
+                <th>Categoría</th>
+                <th>Ubicación</th>
+                <th>Frecuencia de Medición</th>
+                <th>Magnitud Física</th>
+                <th>Imagen</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>AFo3-PP</td>
+                <td>A</td>
+                <td>Pie de Presa</td>
+                <td>Semanal</td>
+                <td>C𝑎𝑢𝑑𝑎𝑙 𝑄 [𝑙⁄𝑠𝑒𝑔]= 𝑉𝑜𝑙𝑢𝑚𝑒𝑛 [𝑙] ⁄ 𝑇𝑖𝑒𝑚𝑝𝑜 [𝑠𝑒𝑔]</td>
+                <td>
+                    {% load static %}
+                    <img src="{% static 'img/afo3_pp.webp' %}" alt="AFo3-PP" style="width: 50%; border-radius: 10px;">
+                </td>
+            </tr>
+            <tr>
+                <td>AFo3-EI</td>
+                <td>A</td>
+                <td>Estribo de MI</td>
+                <td>Semanal</td>
+                <td>C𝑎𝑢𝑑𝑎𝑙 𝑄 [𝑙⁄𝑠𝑒𝑔]= 𝑉𝑜𝑙𝑢𝑚𝑒𝑛 [𝑙] ⁄ 𝑇𝑖𝑒𝑚𝑝𝑜 [𝑠𝑒𝑔]</td>
+                <td>
+                    {% load static %}
+                    <img src="{% static 'img/afo3_ei.webp' %}" alt="AFo3-EI" style="width: 50%; border-radius: 10px;">
+                </td>
+            </tr>
+            <tr>
+                <td>AFo3-TOT</td>
+                <td>A</td>
+                <td>Aguas arriba de la alcantarilla</td>
+                <td>Semanal</td>
+                <td>C𝑎𝑢𝑑𝑎𝑙 𝑄 [𝑙⁄𝑠𝑒𝑔]= 𝑉𝑜𝑙𝑢𝑚𝑒𝑛 [𝑙] ⁄ 𝑇𝑖𝑒𝑚𝑝𝑜 [𝑠𝑒𝑔]</td>
+                <td>
+                    {% load static %}
+                    <img src="{% static 'img/afo3_tot.webp' %}" alt="AFo3-TOT" style="width: 50%; border-radius: 10px;">
+                </td>
+            </tr>
+
+        </tbody>
+    </table>
+    <br>
+    <p>Ubicación de Aforadores:</p>
+    <br>
+    <div class="text-center">
+        {% load static %}
+        <img src="{% static 'img/aforadores_ubicacion.webp' %}" alt="Ubicacion de Aforadores" style="width: 50%; border-radius: 10px;">
+    </div>
+</div>
+</div>
+{% endblock %}

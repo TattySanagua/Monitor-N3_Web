@@ -1,9 +1,30 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>PRESA LATERAL N°3 - DIQUE EL CADILLAL</h1>
-<p>"El monitoreo de cada presa es imperativo porque las presas cambian con
-el tiempo y pueden surgir defectos, No existe sustituto para una vigilancia
-sistemática e inteligente" </p>
-<p><b>Dr. Ralph Peck, 2000</b></p>
+<div style="display: flex; justify-content: center; margin-top: 20px;">
+    <div style="display: flex; align-items: center; background-color: #004080; color: white; padding: 20px;
+                border-radius: 10px; border: 2px solid white; width: 95%; max-width: 1200px;">
+
+        <div style="flex: 1; padding: 20px;">
+            <h1 style="font-size: 2.5rem;">Presa Lateral N°3</h1>
+            <br>
+            <h2>DIQUE EL CADILLAL</h2>
+            <br>
+            <br>
+            <p style="font-size: 1.2rem; text-align: center;">
+                <i>"El monitoreo de cada presa es imperativo porque las presas cambian con el tiempo y pueden surgir defectos, No existe sustituto para una vigilancia sistemática e inteligente"</i>
+            </p>
+            <br>
+            <p style="font-size: 1.1rem; text-align: center;">
+                <b>Dr. Ralph Peck, 2000</b>
+            </p>
+        </div>
+
+        <div style="flex: 1; text-align: center;">
+            {% load static %}
+            <img src="{% static 'img/dique.webp' %}" alt="Presa Lateral N°3"
+                 style="width: 100%; max-width: 500px; border-radius: 10px; box-shadow: 2px 2px 10px rgba(255, 255, 255, 0.3);">
+        </div>
+    </div>
+</div>
 {% endblock %}

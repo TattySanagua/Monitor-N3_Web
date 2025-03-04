@@ -1,0 +1,38 @@
+<!-- Filtro -->
+<form method="GET" class="row g-3 mb-3 justify-content-center">
+    <div class="col-md-3">
+        <label for="fecha_inicio" class="form-label">Desde:</label>
+        <input type="date" id="fecha_inicio" name="fecha_inicio" value="{{ fecha_inicio }}" class="form-control">
+    </div>
+    <div class="col-md-3">
+        <label for="fecha_fin" class="form-label">Hasta:</label>
+        <input type="date" id="fecha_fin" name="fecha_fin" value="{{ fecha_fin }}" class="form-control">
+    </div>
+    <div class="col-md-3 align-self-end">
+        <div style="text-align: center; ">
+            <button class="boton"><i class="fas fa-filter"></i> Filtrar</button>
+            <a href="{{ request.path }}" class="btn btn-secondary"><i class="fas fa-times"></i> Limpiar</a>
+        </div>
+    </div>
+</form>
+
+<style>
+                    .boton {
+                        background-color: #004c95;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                        cursor: pointer;
+                        transition: background-color 0.3s ease;
+                    }
+
+                    .boton:hover {
+                        background-color: #0057AAFF;
+                        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+                    }
+                    .btn-secondary{
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                    }
+                </style>

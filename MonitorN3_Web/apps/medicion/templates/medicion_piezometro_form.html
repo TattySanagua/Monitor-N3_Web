@@ -2,37 +2,129 @@
 {% block title %}Aforador{% endblock %}
 {% block body_id %}piezometro-page{% endblock %}
 {% block content %}
-    <header>
-        <h1>Registrar Nivel Piezométrico</h1>
-    </header>
-        <div class="form-container">
-        <form method="POST" action="{% url 'piezometro_guardar' %}" id="piezometro-form">
-            {% csrf_token %}
-            <div class="form-group">
+<header>
+    <h1>Registrar Nivel Piezométrico</h1>
+</header>
+<br>
+
+<div class="form-container" style="color:black;">
+    <form method="POST" action="{% url 'piezometro_guardar' %}" id="piezometro-form">
+        {% csrf_token %}
+        <div class="form-group">
             {{ medicion_piezometro_form.fecha.label_tag }} {{ medicion_piezometro_form.fecha }}
-            </div>
+        </div>
             {{ medicion_piezometro_form.id_instrumento.label_tag }}
             {{ medicion_piezometro_form.id_instrumento }}
-            <div class="mb-3">
-                <label for="lectura" class="form-label">Lectura:</label>
-                <input type="number" id="lectura" name="lectura" class="form-control" step="0.01" required>
-            </div>
-
-            <div class="button-container">
-                <button type="button" id="calcular-np">Calcular</button>
-            </div>
-
-            <div id="resultado-np">
-                <h5>Nivel piezométrico: <span id="valor-np"></span></h5>
-            </div>
-            <input type="hidden" id="nivel_piezometrico" name="nivel_piezometrico">
-
-            <div class="button-container">
-                <button type="submit">Guardar</button>
-            </div>
-        </form>
-         </div>
+        <div class="mb-3">
+            <label for="lectura" class="form-label">Lectura:</label>
+            <input type="number" id="lectura" name="lectura" class="form-control" step="0.01" required>
         </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
+        <div style="text-align: center; ">
+                <button class="boton-calc" id="calcular-np">Calcular</button>
+                <style>
+                    .boton-calc {
+                        background-color: #007536;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                        cursor: pointer;
+                        transition: background-color 0.3s ease;
+                    }
+
+                    .boton-calc:hover {
+                        background-color: #028f46;
+                        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+                    }
+                </style>
+        </div>
+
+        <div id="resultado-np">
+            <h5>Nivel piezométrico: <span id="valor-np"></span></h5>
+        </div>
+        <input type="hidden" id="nivel_piezometrico" name="nivel_piezometrico">
+
+        <br>
+        <div style="text-align: center; ">
+                <button type="submit" class="boton">Guardar</button>
+                <style>
+                        .boton {
+                            background-color: #004080;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 20px;
+                            cursor: pointer;
+                            transition: background-color 0.3s ease;
+                        }
+
+                        .boton:hover {
+                            background-color: #0057AAFF;
+                            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+                        }
+                    </style>
+                </div>
+    </form>
+</div>
+<div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="toast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toast-message"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("✅ Script cargado correctamente");
+
+    let form = document.getElementById("piezometro-form");
+    if (!form) {
+        console.error("❌ No se encontró el formulario");
+        return;
+    }
+
+    form.addEventListener("submit", function(event) {
+        event.preventDefault();
+        console.log("📤 Enviando datos...");
+
+        let formData = new FormData(this);
+
+        fetch("{% url 'piezometro_guardar' %}", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("📥 Respuesta recibida:", data);
+
+            let toastElement = document.getElementById("toast");
+            let toastMessage = document.getElementById("toast-message");
+            let toastContainer = new bootstrap.Toast(toastElement);
+
+            if (data.success) {
+                toastElement.classList.remove("bg-danger");
+                toastElement.classList.add("bg-success");
+            } else {
+                toastElement.classList.remove("bg-success");
+                toastElement.classList.add("bg-danger");
+            }
+
+            toastMessage.innerText = data.message;
+            toastContainer.show();
+
+            if (data.success) {
+                document.getElementById("resultado-np").style.display = "none";
+                form.reset();
+            }
+        })
+        .catch(error => console.error("❌ Error en la solicitud:", error));
+    });
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js" integrity="sha384-0pUGZvbkm6XF6gxjEnlmuGrJXVbNuzT9qBBavbLwCsOGabYfZo0T0to5eqruptLy" crossorigin="anonymous"></script>
 {% endblock %}

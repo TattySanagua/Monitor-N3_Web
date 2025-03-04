@@ -4,14 +4,15 @@
 
 <div class="container mt-4">
     <h2 class="mb-3">Lista de Instrumentos</h2>
+    <br>
 
-    <!-- Filtros por nombre y tipo -->
-    <form method="GET" id="filtro-form" class="row g-3 mb-3">
-        <div class="col-md-4">
+    <!-- Filtro -->
+    <form method="GET" id="filtro-form" class="row g-3 mb-3 justify-content-center">
+        <div class="col-md-3">
             <label for="nombre" class="form-label">Nombre del Instrumento</label>
             <input type="text" class="form-control" id="nombre" name="nombre" value="{{ nombre_filtro }}">
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <label for="tipo" class="form-label">Tipo de Instrumento</label>
             <select class="form-control" id="tipo" name="tipo">
                 <option value="">Todos</option>
@@ -20,96 +21,171 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="col-md-4 align-self-end">
-            <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filtrar</button>
-            <a href="{% url 'instrumento_tabla' %}" class="btn btn-secondary"><i class="fas fa-times"></i> Limpiar</a>
+        <div class="col-md-3 align-self-end">
+            <div style="text-align: center; ">
+                <button class="boton"><i class="fas fa-filter"></i> Filtrar</button>
+                    <a href="{% url 'instrumento_tabla' %}" class="btn btn-secondary"><i class="fas fa-times"></i> Limpiar</a>
+                <style>
+                    .boton {
+                        background-color: #004c95;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                        cursor: pointer;
+                        transition: background-color 0.3s ease;
+                    }
+
+                    .boton:hover {
+                        background-color: #0057AAFF;
+                        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+                    }
+                    .btn-secondary{
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                    }
+                </style>
+            </div>
         </div>
     </form>
 
+    <!-- Exportación -->
     <div class="mb-3 d-flex justify-content-end">
         <a href="{% url 'export_instrumentos_excel' %}" class="btn btn-success btn-sm mx-1">
-            <i class="fas fa-file-excel"></i> Exportar Excel
+            <i class="fas fa-file-excel"></i> <i class="fas fa-download"></i>
         </a>
         <a href="{% url 'export_instrumentos_pdf' %}" class="btn btn-danger btn-sm mx-1">
-            <i class="fas fa-file-pdf"></i> Exportar PDF
+            <i class="fas fa-file-pdf"></i> <i class="fas fa-download"></i>
         </a>
     </div>
 
     <!-- Tabla -->
-    <table class="table table-bordered table-striped text-center">
-        <thead class="table-dark">
-            <tr>
-                <th>Nombre</th>
-                <th>Tipo</th>
-                <th>Fecha de Alta</th>
-                <th>Fecha de Baja</th>
-                <th>Activo</th>
-                <th>Parámetros</th>
-                <th>Modificar</th>
-                <th>Eliminar</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for instrumento in instrumentos %}
-            <tr>
-                <td>{{ instrumento.nombre }}</td>
-                <td>{{ instrumento.id_tipo.nombre_tipo }}</td>
-                <td>{{ instrumento.fecha_alta|date:"d/m/Y" |default:"-"}}</td>
-                <td>{{ instrumento.fecha_baja|date:"d/m/Y" |default:"-"}}</td>
-                <td>
-                    {% if instrumento.activo %}
-                        <span class="badge bg-success">Sí</span>
-                    {% else %}
-                        <span class="badge bg-danger">No</span>
-                    {% endif %}
-                </td>
-                <td>
-                    {% for parametro in instrumento.parametro_set.all %}
-                        <strong>{{ parametro.nombre_parametro }}:</strong> {{ parametro.valor }}<br>
-                    {% empty %}
-                        <em>-</em>
-                    {% endfor %}
-                </td>
-                <td>
-                    <a href="{% url 'instrumento_modificar' instrumento.id %}" class="btn btn-warning btn-sm">
-                    <i class="fas fa-edit"></i>
-                    </a>
-                </td>
-                <td>
-                    <a href="{% url 'baja_instrumento' instrumento.id %}" class="btn btn-danger btn-sm" onclick="return confirm('¿Seguro que quieres eliminar este instrumento?')">
-                    <i class="fas fa-trash-alt"></i>
-                    </a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6" class="text-center">No hay instrumentos registrados.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-responsive mi-tabla">
+        <table class="table table-bordered table-striped text-center table-hover mi-tabla-tabla" style="vertical-align: middle;">
+            <thead class="table-dark mi-tabla-thead">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Fecha de Alta</th>
+                    <th>Fecha de Baja</th>
+                    <th>Activo</th>
+                    <th>Parámetros</th>
+                    <th>Modificar</th>
+                    <th>Eliminar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for instrumento in instrumentos %}
+                <tr>
+                    <td>{{ instrumento.nombre }}</td>
+                    <td>{{ instrumento.id_tipo.nombre_tipo }}</td>
+                    <td>{{ instrumento.fecha_alta|date:"d/m/Y" |default:"-"}}</td>
+                    <td>{{ instrumento.fecha_baja|date:"d/m/Y" |default:"-"}}</td>
+                    <td>
+                        {% if instrumento.activo %}
+                            <span class="badge bg-success">Sí</span>
+                        {% else %}
+                            <span class="badge bg-danger">No</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% for parametro in instrumento.parametro_set.all %}
+                            <strong>{{ parametro.nombre_parametro }}:</strong> {{ parametro.valor }}<br>
+                        {% empty %}
+                            <em>-</em>
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% if instrumento.activo %}
+                            <a href="{% url 'instrumento_modificar' instrumento.id %}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit"></i>
+                            </a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if instrumento.activo %}
+                            <button class="btn btn-danger btn-sm" style="width: 40px;" onclick="darDeBaja({{ instrumento.id }})">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">No hay instrumentos registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
+
+<div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1050">
+    <div id="toast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toast-message"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
 <script>
-    function darDeBaja(instrumentoId) {
-        if (confirm("¿Está seguro de que desea dar de baja este instrumento?")) {
-            fetch(`/instrumento/dar_de_baja/${instrumentoId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}',
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'ok') {
-                    alert("Instrumento dado de baja correctamente.");
-                    location.reload();
-                } else {
-                    alert("Error al dar de baja el instrumento.");
-                }
-            })
-            .catch(error => console.error('Error:', error));
+    function mostrarToast(mensaje, tipo) {
+        let toastElement = document.getElementById("toast");
+        let toastMessage = document.getElementById("toast-message");
+        let toast = new bootstrap.Toast(toastElement);
+
+        if (tipo === "success") {
+            toastElement.classList.remove("bg-danger");
+            toastElement.classList.add("bg-success");
+        } else {
+            toastElement.classList.remove("bg-success");
+            toastElement.classList.add("bg-danger");
         }
+
+        toastMessage.innerText = mensaje;
+        toast.show();
     }
+
+    function darDeBaja(instrumentoId) {
+    if (confirm("¿Está seguro de que desea dar de baja este instrumento?")) {
+        fetch(`/instrumento/dar_de_baja/${instrumentoId}/`, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": "{{ csrf_token }}",
+                "Content-Type": "application/json"
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                mostrarToast(data.message, "success");
+
+                // 🔹 Actualizar el estado "Activo" a "No" dinámicamente
+                let badgeActivo = document.getElementById(`estado-activo-${instrumentoId}`);
+                if (badgeActivo) {
+                    badgeActivo.classList.remove("bg-success");
+                    badgeActivo.classList.add("bg-danger");
+                    badgeActivo.innerText = "No";
+                }
+
+                // 🔹 Mostrar la fecha de baja en la tabla
+                let fechaBaja = document.getElementById(`fecha-baja-${instrumentoId}`);
+                if (fechaBaja) {
+                    let hoy = new Date();
+                    let fechaFormateada = hoy.toLocaleDateString("es-ES");
+                    fechaBaja.innerText = fechaFormateada;
+                }
+
+            } else {
+                mostrarToast("❌ Error al dar de baja el instrumento.", "error");
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            mostrarToast("❌ Error en la solicitud.", "error");
+        });
+    }
+}
 </script>
 {% endblock %}

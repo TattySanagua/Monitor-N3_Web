@@ -2,49 +2,49 @@
 {% load custom_filters %}
 {% block title %}Tabla de Freatímetros{% endblock %}
 {% block content %}
-    <div class="container mt-4">
-        <h2 class="text-center">Tabla de Niveles Freáticos</h2>
-        <!-- Botones de Exportación -->
-    <div class="d-flex justify-content-end mb-3">
-        <a href="{% url 'export_freatimetro_excel' %}" class="btn btn-success mx-2">
-            <i class="fas fa-file-excel"></i> Exportar Excel
-        </a>
-        <a href="{% url 'export_freatimetro_pdf' %}" class="btn btn-danger">
-            <i class="fas fa-file-pdf"></i> Exportar PDF
-        </a>
-    </div>
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped text-center">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Nivel Embalse</th>
-                        <th colspan="{{ nombres_freatimetros|length }}">Instrumento - Nivel Freático [msnm]</th>
-                    </tr>
-                    <tr>
-                        <th>dd-mm-YYYY</th>
-                        <th>[msnm]</th>
-                        {% for nombre in nombres_freatimetros %}
-                            <th>{{ nombre }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for fecha in fechas %}
-                        <tr>
-                            <td>{{ fecha }}</td>
-                            <td>{{ datos_tabla|key:fecha|key:"nivel_embalse"|default:"-" }}</td>
-                            {% for nombre in nombres_freatimetros %}
-                                <td>{{ datos_tabla|key:fecha|key:nombre|default:"-" }}</td>
-                            {% endfor %}
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="{{ nombres_freatimetros|length|add:2 }}" class="text-center">No hay mediciones registradas.</td>
-                        </tr>
+<div class="container mt-4">
+    <h2 class="text-center">Tabla de Niveles Freáticos</h2>
+    <br>
+
+    <!-- Filtro de Fechas -->
+    {% include "filtro_fecha.html" %}
+
+    <!-- Exportación -->
+    {% include "exportar.html" with url_export_excel=url_export_excel url_export_pdf=url_export_pdf %}
+
+    <!-- Tabla -->
+    <div class="table-responsive mi-tabla">
+        <table class="table table-bordered table-striped text-center table-hover mi-tabla-tabla">
+            <thead class="table-dark mi-tabla-thead">
+                <tr>
+                    <th>Fecha</th>
+                    <th>Nivel Embalse</th>
+                    <th colspan="{{ nombres_freatimetros|length }}">Instrumento - Nivel Freático [msnm]</th>
+                </tr>
+                <tr>
+                    <th>dd-mm-YYYY</th>
+                    <th>[msnm]</th>
+                    {% for nombre in nombres_freatimetros %}
+                    <th>{{ nombre }}</th>
                     {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                </tr>
+            </thead>
+            <tbody>
+            {% for fecha in fechas %}
+            <tr>
+                <td>{{ fecha }}</td>
+                <td>{{ datos_tabla|key:fecha|key:"nivel_embalse"|default:"-" }}</td>
+                {% for nombre in nombres_freatimetros %}
+                <td>{{ datos_tabla|key:fecha|key:nombre|default:"-" }}</td>
+                {% endfor %}
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="{{ nombres_freatimetros|length|add:2 }}" class="text-center">No hay mediciones registradas.</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
+</div>
 {% endblock %}

@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.forms import modelformset_factory
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Parametro, Tipo, Instrumento
@@ -13,12 +14,10 @@ from django.shortcuts import render
 from django.http import HttpResponse
 
 def crear_instrumento(request):
-
     if request.method == 'POST':
         instrumento_form = InstrumentoForm(request.POST)
 
         if instrumento_form.is_valid():
-
             instrumento = instrumento_form.save(commit=False)
 
             if not instrumento.fecha_alta:
@@ -34,13 +33,14 @@ def crear_instrumento(request):
 
             if tipo_nombre in ["PIEZÓMETRO", "FREATÍMETRO"]:
                 parametros = [
-                    {"nombre_parametro": "cb", "valor": request.POST.get("cb",0)},
-                    {"nombre_parametro": "angulo", "valor": request.POST.get("angulo", 0)},
+                    {"nombre_parametro": "cb", "valor": Decimal(request.POST.get("cb", "0"))},  # 🔹 Usamos Decimal
+                    {"nombre_parametro": "angulo", "valor": Decimal(request.POST.get("angulo", "0"))},
+                    # 🔹 Usamos Decimal
                 ]
-            elif tipo == "AFORADOR PARSHALL":
+            elif tipo_nombre == "AFORADOR PARSHALL":
                 parametros = [
-                    {"nombre_parametro": "k", "valor": request.POST.get("k", 0)},
-                    {"nombre_parametro": "u", "valor": request.POST.get("u", 0)},
+                    {"nombre_parametro": "k", "valor": Decimal(request.POST.get("k", "0"))},
+                    {"nombre_parametro": "u", "valor": Decimal(request.POST.get("u", "0"))},
                 ]
             else:
                 parametros = []
@@ -51,13 +51,12 @@ def crear_instrumento(request):
                     nombre_parametro=param["nombre_parametro"],
                     valor=param["valor"]
                 )
-            return HttpResponse("<h1>EXITO</h1>")
-        else:
-            print(instrumento_form.errors)
-            return HttpResponse("<h1>Error en el formulario</h1>")
-    else:
-            instrumento_form = InstrumentoForm()
 
+            return JsonResponse({"success": True, "message": "✅ Instrumento guardado correctamente."})
+
+        return JsonResponse({"success": False, "message": "❌ Error: Datos inválidos en el formulario."}, status=400)
+
+    instrumento_form = InstrumentoForm()
     return render(request, "instrumento_form.html", {"instrumento_form": instrumento_form})
 
 def instrumento_tabla(request):
@@ -83,12 +82,15 @@ def instrumento_tabla(request):
     return render(request, 'instrumento_tabla.html', contexto)
 
 def baja_instrumento(request, instrumento_id):
+    if request.method == "POST":
+        instrumento = get_object_or_404(Instrumento, id=instrumento_id)
+        instrumento.activo = False  # Baja lógica
+        instrumento.fecha_baja = now()
+        instrumento.save()
 
-    instrumento = get_object_or_404(Instrumento, id=instrumento_id)
-    instrumento.activo = False  #Baja lógica
-    instrumento.fecha_baja = now()
-    instrumento.save()
-    return JsonResponse({'status': 'ok', 'message': 'Instrumento dado de baja correctamente'})
+        return JsonResponse({"success": True, "message": "✅ Instrumento dado de baja correctamente."})
+
+    return JsonResponse({"success": False, "message": "❌ Error: Solicitud no válida."}, status=400)
 
 def instrumento_modificar(request, instrumento_id):
 
@@ -103,10 +105,14 @@ def instrumento_modificar(request, instrumento_id):
         if form.is_valid() and formset.is_valid():
             form.save()
             formset.save()
-            return redirect('instrumento_tabla')
-    else:
-        form = InstrumentoUpdateForm(instance=instrumento)
-        formset = ParametroFormSet(queryset=Parametro.objects.filter(id_instrumento=instrumento))
+            return JsonResponse({"success": True, "message": "✅ Instrumento modificado correctamente."})
+
+        return JsonResponse(
+            {"success": False, "message": "❌ Error al modificar el instrumento. Verifica los datos ingresados."})
+
+    form = InstrumentoUpdateForm(instance=instrumento)
+
+    formset = ParametroFormSet(queryset=Parametro.objects.filter(id_instrumento=instrumento))
 
     return render(request, 'instrumento_modificar.html', {
         'form': form,

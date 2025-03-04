@@ -2,49 +2,57 @@
 {% load custom_filters %}
 {% block title %}Tabla de Aforadores{% endblock %}
 {% block content %}
-    <div class="container mt-4">
-        <h2 class="text-center">Tabla de Mediciones de Aforadores</h2>
-        <!-- Botones de Exportación -->
-        <div class="d-flex justify-content-end mb-3">
-            <a href="{% url 'export_aforador_excel' %}" class="btn btn-success mx-2">
-                <i class="fas fa-file-excel"></i> Exportar Excel
-            </a>
-            <a href="{% url 'export_aforador_pdf' %}" class="btn btn-danger">
-                <i class="fas fa-file-pdf"></i> Exportar PDF
-            </a>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped text-center">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Nivel Embalse</th>
-                        <th colspan="{{ nombres_aforadores|length }}">Instrumento - Caudal [m³/s - l/s]</th>
-                    </tr>
-                    <tr>
-                        <th>dd-mm-YYYY</th>
-                        <th>[msnm]</th>
-                        {% for nombre in nombres_aforadores %}
-                            <th>{{ nombre }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for fecha in fechas %}
-                        <tr>
-                            <td>{{ fecha }}</td>
-                            <td>{{ datos_tabla|key:fecha|key:"nivel_embalse"|default:"-" }}</td>
-                            {% for nombre in nombres_aforadores %}
-                                <td>{{ datos_tabla|key:fecha|key:nombre|default:"-" }}</td>
-                            {% endfor %}
-                        </tr>
-                    {% empty %}
-                        <tr>
-                            <td colspan="{{ nombres_aforadores|length|add:2 }}" class="text-center">No hay mediciones registradas.</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+<div class="container mt-4">
+    <h2 class="text-center">Tabla de Caudales</h2>
+    <br>
+
+    <!-- Filtro de Fechas -->
+    {% include "filtro_fecha.html" %}
+
+    <!-- Exportación -->
+    <div class="d-flex justify-content-end mb-3">
+        <a href="{% url 'export_aforador_excel' %}" class="btn btn-success mx-2">
+            <i class="fas fa-file-excel"></i> <i class="fas fa-download"></i>
+        </a>
+        <a href="{% url 'export_aforador_pdf' %}" class="btn btn-danger">
+            <i class="fas fa-file-pdf"></i> <i class="fas fa-download"></i>
+        </a>
     </div>
+
+    <!-- Tabla -->
+    <div class="table-responsive mi-tabla">
+        <table class="table table-bordered table-striped text-center table-hover mi-tabla-tabla">
+            <thead class="table-dark mi-tabla-thead">
+            <tr>
+                <th>Fecha</th>
+                <th>Nivel Embalse</th>
+                <th colspan="{{ nombres_aforadores|length }}">Instrumento - Caudal [m³/s - l/s]</th>
+            </tr>
+            <tr>
+                <th>dd-mm-YYYY</th>
+                <th>[msnm]</th>
+                {% for nombre in nombres_aforadores %}
+                <th>{{ nombre }}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+
+            <tbody>
+            {% for fecha in fechas %}
+            <tr>
+                <td>{{ fecha }}</td>
+                <td>{{ datos_tabla|key:fecha|key:"nivel_embalse"|default:"-" }}</td>
+                {% for nombre in nombres_aforadores %}
+                <td>{{ datos_tabla|key:fecha|key:nombre|default:"-" }}</td>
+                {% endfor %}
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="{{ nombres_aforadores|length|add:2 }}" class="text-center">No hay mediciones registradas.</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

@@ -1,9 +1,20 @@
 {% extends 'base.html' %}
 {% block title %}Instrumento{% endblock %}
 {% block content %}
-<h1>Registrar Nuevo Instrumento</h1>
-    <div class="form-container">
-    <form method="POST">
+<header>
+    <h1>Registrar Nuevo Instrumento</h1>
+</header>
+<br>
+<div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1050">
+    <div id="toast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toast-message"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+<div class="form-container" style="color:black;">
+    <form method="POST" id="instrumento-form">
         {% csrf_token %}
         <div class="form-group">
             {{ instrumento_form.nombre.label_tag }} {{ instrumento_form.nombre }}
@@ -19,17 +30,17 @@
                 <option value="{{ tipo.id }}">{{ tipo.nombre_tipo }}</option>
             {% endfor %}
         </select>
-
+        <br>
         <!-- Contenedor de parámetros (oculto por defecto) -->
         <div id="parametros-container" style="display: none;">
-            <h3>Parámetros</h3>
-
+            <h5>Parámetros</h5>
+            <br>
             <!-- Piezómetro y Freatímetro -->
             <div id="piezometro-container" style="display: none;">
                 <label for="cb">CB[msnm]:</label>
                 <input type="number" id="cb" name="cb" step="0.0001" class="form-control"><br>
 
-                <label for="angulo">Ángulo de Instalación [º]:</label>
+                <label for="angulo">Ángulo de Instalación Cenital [º]:</label>
                 <input type="number" id="angulo" name="angulo" step="0.0001" class="form-control"><br>
             </div>
 
@@ -42,36 +53,95 @@
                 <input type="number" id="u" name="u" step="0.0001" class="form-control"><br>
             </div>
         </div>
-        <div class="button-container">
-            <button type="submit">Guardar</button>
-        </div>
+        <br>
+        <div style="text-align: center; ">
+                <button type="submit" class="boton">Guardar</button>
+                <style>
+                        .boton {
+                            background-color: #004080;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 20px;
+                            cursor: pointer;
+                            transition: background-color 0.3s ease;
+                        }
+
+                        .boton:hover {
+                            background-color: #0057AAFF;
+                            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+                        }
+                    </style>
+                </div>
     </form>
     </div>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            let tipoInstrumento = document.getElementById("tipo-instrumento");
+<script>
+document.addEventListener("DOMContentLoaded", function () {
 
-            if (tipoInstrumento) {  // ✅ Verificamos que el select exista
-                tipoInstrumento.addEventListener("change", function () {
-                    let tipo = this.value;
-                    console.log("Tipo seleccionado:", tipo);  // ✅ Depuración en consola
+    let form = document.getElementById("instrumento-form");
+    if (!form) {
+        console.error("❌ No se encontró el formulario");
+        return;
+    }
 
-                    // Ocultar todos los contenedores
-                    document.getElementById("parametros-container").style.display = "none";
-                    document.getElementById("piezometro-container").style.display = "none";
-                    document.getElementById("parshall-container").style.display = "none";
+    form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        console.log("📤 Enviando datos...");
 
-                    if (tipo === "1" || tipo === "2") {
-                        document.getElementById("parametros-container").style.display = "block";
-                        document.getElementById("piezometro-container").style.display = "block";
-                    } else if (tipo === "4") {
-                        document.getElementById("parametros-container").style.display = "block";
-                        document.getElementById("parshall-container").style.display = "block";
-                    }
-                });
+        let formData = new FormData(this);
+
+        fetch("{% url 'crear' %}", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+
+            let toastElement = document.getElementById("toast");
+            let toastMessage = document.getElementById("toast-message");
+            let toastContainer = new bootstrap.Toast(toastElement);
+
+            if (data.success) {
+                toastElement.classList.remove("bg-danger");
+                toastElement.classList.add("bg-success");
+                form.reset();
             } else {
-                console.error("⚠️ No se encontró el elemento con id 'tipo-instrumento'.");
+                toastElement.classList.remove("bg-success");
+                toastElement.classList.add("bg-danger");
+            }
+
+            toastMessage.innerText = data.message;
+            toastContainer.show();
+        })
+        .catch(error => console.error("Error en la solicitud:", error));
+    });
+
+    // 🔹 Script para mostrar los parámetros según el tipo de instrumento
+    let tipoInstrumento = document.getElementById("tipo-instrumento");
+
+    if (tipoInstrumento) {
+        tipoInstrumento.addEventListener("change", function () {
+            let tipo = this.value;
+            console.log("Tipo seleccionado:", tipo);
+
+            document.getElementById("parametros-container").style.display = "none";
+            document.getElementById("piezometro-container").style.display = "none";
+            document.getElementById("parshall-container").style.display = "none";
+
+            if (tipo === "1" || tipo === "2") {
+                document.getElementById("parametros-container").style.display = "block";
+                document.getElementById("piezometro-container").style.display = "block";
+            } else if (tipo === "4") {
+                document.getElementById("parametros-container").style.display = "block";
+                document.getElementById("parshall-container").style.display = "block";
             }
         });
-    </script>
+    } else {
+        console.error("⚠️ No se encontró el elemento con id 'tipo-instrumento'.");
+    }
+});
+</script>
 {% endblock %}

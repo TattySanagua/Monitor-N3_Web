@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'apps.precipitacion',
     'apps.medicion',
     'apps.graficos',
+    'apps.presa',
 ]
 
 MIDDLEWARE = [

@@ -5,7 +5,18 @@
 <header>
     <h1>Registrar Nivel Freático</h1>
 </header>
-<div class="form-container">
+<br>
+
+<div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1050">
+    <div id="toast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toast-message"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+<div class="form-container" style="color:black;">
     <form method="POST" action="{% url 'freatimetro_guardar' %}" id="freatimetro-form">
         {% csrf_token %}
         <div class="form-group">
@@ -18,17 +29,100 @@
             <input type="number" id="lectura" name="lectura" class="form-control" step="0.01" required>
         </div>
 
-        <div class="button-container">
-            <button type="button" id="calcular-nf">Calcular</button>
+        <div style="text-align: center; ">
+                <button type="button" class="boton-calc" id="calcular-nf">Calcular</button>
+                <style>
+                    .boton-calc {
+                        background-color: #007536;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                        cursor: pointer;
+                        transition: background-color 0.3s ease;
+                    }
+
+                    .boton-calc:hover {
+                        background-color: #028f46;
+                        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+                    }
+                </style>
         </div>
         <div id="resultado-nf">
             <h5>Nivel freático: <span id="valor-nf"></span></h5>
         </div>
         <input type="hidden" id="nivel_freatico" name="nivel_freatico">
 
-        <div class="button-container">
-            <button type="submit">Guardar</button>
-        </div>
+        <br>
+        <div style="text-align: center; ">
+                <button type="submit" class="boton">Guardar</button>
+                <style>
+                        .boton {
+                            background-color: #004080;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 20px;
+                            cursor: pointer;
+                            transition: background-color 0.3s ease;
+                        }
+
+                        .boton:hover {
+                            background-color: #0057AAFF;
+                            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+                        }
+                    </style>
+                </div>
     </form>
 </div>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("✅ Script cargado correctamente");
+
+    let form = document.getElementById("freatimetro-form");
+
+    if (!form) {
+        console.error("❌ No se encontró el formulario");
+        return;
+    }
+
+    // Envío del formulario con fetch
+    form.addEventListener("submit", function(event) {
+        event.preventDefault();
+        console.log("📤 Enviando datos...");
+
+        let formData = new FormData(this);
+
+        fetch("{% url 'freatimetro_guardar' %}", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("📥 Respuesta recibida:", data);
+
+            let toastElement = document.getElementById("toast");
+            let toastMessage = document.getElementById("toast-message");
+            let toastContainer = new bootstrap.Toast(toastElement);
+
+            if (data.success) {
+                toastElement.classList.remove("bg-danger");
+                toastElement.classList.add("bg-success");
+                form.reset();
+                document.getElementById("resultado-nf").style.display = "none";  // 🔹 Ocultar resultado después de guardar
+            } else {
+                toastElement.classList.remove("bg-success");
+                toastElement.classList.add("bg-danger");
+            }
+
+            toastMessage.innerText = data.message;
+            toastContainer.show();
+        })
+        .catch(error => console.error("❌ Error en la solicitud:", error));
+    });
+});
+</script>
 {% endblock %}

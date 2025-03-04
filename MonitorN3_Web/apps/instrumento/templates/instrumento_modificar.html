@@ -4,8 +4,19 @@
 {% block content %}
 <div class="container mt-4">
     <h2>Modificar Instrumento</h2>
-    <div class="form-container">
-    <form method="POST">
+    <br>
+
+    <div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1050">
+        <div id="toast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toast-message"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-container" style="color:black;">
+    <form method="POST" id="instrumento-form">
         {% csrf_token %}
 
         <div class="mb-3">
@@ -23,8 +34,10 @@
             {{ form.fecha_alta }}
         </div>
 
+        <br>
         {% if formset %}
-            <h3>Parámetros</h3>
+            <h5>Parámetros</h5>
+         <br>
             {{ formset.management_form }}
             {% for param_form in formset %}
                 <div class="mb-3">
@@ -32,13 +45,103 @@
                 </div>
             {% endfor %}
         {% endif %}
-        <div class="button-container">
-            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-        </div>
-        <div class="button-container">
-            <a href="{% url 'instrumento_tabla' %}" class="btn btn-secondary">Cancelar</a>
+        <div style="text-align: center; ">
+                <button type="submit" class="boton">Guardar</button>
+                <style>
+                        .boton {
+                            background-color: #004080;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 20px;
+                            cursor: pointer;
+                            transition: background-color 0.3s ease;
+                        }
+
+                        .boton:hover {
+                            background-color: #0057AAFF;
+                            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+                        }
+                    </style>
+                </div>
+        <br>
+        <div style="text-align: center; ">
+            <button type="button" class="boton1" id="cancelar-btn">Cancelar</button>
+                <style>
+                    .boton1 {
+                        background-color: #97060a;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                        cursor: pointer;
+                        transition: background-color 0.3s ease;
+                    }
+
+                    .boton1:hover {
+                        background-color: #b5080e;
+                        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+                    }
+                </style>
         </div>
     </form>
     </div>
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("✅ Script cargado correctamente");
+
+    let form = document.getElementById("instrumento-form");
+     let cancelarBtn = document.getElementById("cancelar-btn");
+
+    if (!form) {
+        console.error("❌ No se encontró el formulario");
+        return;
+    }
+
+    cancelarBtn.addEventListener("click", function() {
+        window.location.href = "{% url 'instrumento_tabla' %}";
+    });
+
+    form.addEventListener("submit", function(event) {
+        event.preventDefault();
+        console.log("📤 Enviando datos...");
+
+        let formData = new FormData(this);
+
+        fetch("{% url 'instrumento_modificar' instrumento.id %}", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("📥 Respuesta recibida:", data);
+
+            let toastElement = document.getElementById("toast");
+            let toastMessage = document.getElementById("toast-message");
+            let toastContainer = new bootstrap.Toast(toastElement);
+
+            if (data.success) {
+                toastElement.classList.remove("bg-danger");
+                toastElement.classList.add("bg-success");
+
+                setTimeout(() => {
+                    window.location.href = "{% url 'instrumento_tabla' %}";
+                }, 2000);
+            } else {
+                toastElement.classList.remove("bg-success");
+                toastElement.classList.add("bg-danger");
+            }
+
+            toastMessage.innerText = data.message;
+            toastContainer.show();
+        })
+        .catch(error => console.error("❌ Error en la solicitud:", error));
+    });
+});
+</script>
 {% endblock %}

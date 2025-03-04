@@ -1,9 +1,10 @@
 from reportlab.lib import colors
 import openpyxl
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from datetime import timedelta, datetime
 from django.db.models import Sum
+from django.http import JsonResponse
 from reportlab.lib.pagesizes import landscape, letter
 from reportlab.pdfgen import canvas
 from reportlab.platypus import Table, TableStyle
@@ -20,13 +21,13 @@ def nivelembalse(request):
         embalse_form = EmbalseForm(request.POST)
         if embalse_form.is_valid():
             embalse_form.save()
+            return JsonResponse({"success": True, "message": "✅ Nivel de embalse guardado correctamente."})
         else:
-            return render(request, 'embalse_form.html')
-
-        return render(request, 'success.html', {})
+            return JsonResponse(
+                {"success": False, "message": "❌ Error al guardar el nivel de embalse. Verifica los datos."})
 
     embalse_form = EmbalseForm()
-    return render(request, 'embalse_form.html', {'embalse_form': embalse_form})
+    return render(request, "embalse_form.html", {"embalse_form": embalse_form})
 
 def embalse_precipitacion_tabla(request):
 

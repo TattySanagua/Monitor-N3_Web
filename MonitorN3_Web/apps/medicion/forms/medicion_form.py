@@ -40,27 +40,27 @@ class MedicionAforadorVolumetrico(ModelForm):
     )
 
     volumen_1 = forms.FloatField(label='Volumen [l]', required=False,
-                                 widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}))
+                                 widget=forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Volumen (l)', 'step': '0.01'}))
     tiempo_1 = forms.FloatField(
         label='Tiempo (s)', required=False,
         widget=forms.NumberInput(
-            attrs={'class': 'form-control', 'step': '0.01'}))
+            attrs={'class': 'form-control', 'placeholder': 'Tiempo (s)','step': '0.01'}))
 
     volumen_2 = forms.FloatField(
         label='Volumen [l]', required=False,
         widget=forms.NumberInput(
-            attrs={'class': 'form-control', 'step': '0.01'}))
+            attrs={'class': 'form-control', 'placeholder': 'Volumen (l)', 'step': '0.01'}))
     tiempo_2 = forms.FloatField(
         label='Tiempo (s)', required=False,
         widget=forms.NumberInput(
-            attrs={'class': 'form-control', 'step': '0.01'}))
+            attrs={'class': 'form-control',  'placeholder': 'Tiempo (s)','step': '0.01'}))
 
     volumen_3 = forms.FloatField(
         label='Volumen [l]', required=False,
         widget=forms.NumberInput(
-            attrs={'class': 'form-control', 'step': '0.01'}))
+            attrs={'class': 'form-control', 'placeholder': 'Volumen (l)','step': '0.01'}))
     tiempo_3 = forms.FloatField(label='Tiempo (s)', required=False,
-                                widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}))
+                                widget=forms.NumberInput(attrs={'class': 'form-control',  'placeholder': 'Tiempo (s)', 'step': '0.01'}))
     class Meta:
         model = Medicion
         fields = ['id_instrumento', 'fecha']
