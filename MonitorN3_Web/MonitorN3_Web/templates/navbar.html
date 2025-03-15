@@ -67,11 +67,22 @@
                         </ul>
                     </li>
 
+                    <!-- Graficos -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarGraficos" role="button" data-bs-toggle="dropdown">Gráficos</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'predefinidos' %}">Predefinidos</a></li>
                             <li><a class="dropdown-item" href="{% url 'personalizados' %}">Personalizados</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Estadísticas -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarEstadisticas" role="button" data-bs-toggle="dropdown">Estadísticas</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'resumen' %}">Resumen Estadístico</a></li>
+                            <li><a class="dropdown-item" href="#">Correlaciones</a></li>
+                            <li><a class="dropdown-item" href="#">Predicciones y modelos ARMA</a></li>
                         </ul>
                     </li>
                 </ul>

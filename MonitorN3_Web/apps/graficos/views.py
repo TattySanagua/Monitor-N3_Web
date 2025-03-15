@@ -248,7 +248,7 @@ def generar_grafico_predefinido(request):
             )
 
         elif seleccion == "nivel_embalse_caudal_afo3_tot":
-            aforadores = ["AFo3-TOT"]
+            aforadores = ["AFO3-TOT"]
             embalse_data = Embalse.objects.all().values("fecha", "nivel_embalse")
             aforador_data = Medicion.objects.filter(id_instrumento__nombre__in=aforadores).values("fecha", "valor", "id_instrumento__nombre")
 
@@ -286,7 +286,7 @@ def generar_grafico_predefinido(request):
             )
 
         elif seleccion == "nivel_embalse_caudal_afo3_ei":
-            aforadores = ["AFo3-EI"]
+            aforadores = ["AFO3-EI"]
             embalse_data = Embalse.objects.all().values("fecha", "nivel_embalse")
             aforador_data = Medicion.objects.filter(id_instrumento__nombre__in=aforadores).values("fecha", "valor", "id_instrumento__nombre")
 
@@ -324,7 +324,7 @@ def generar_grafico_predefinido(request):
             )
 
         elif seleccion == "nivel_embalse_caudal_afo3_pp":
-            aforadores = ["AFo3-PP"]
+            aforadores = ["AFO3-PP"]
             embalse_data = Embalse.objects.all().values("fecha", "nivel_embalse")
             aforador_data = Medicion.objects.filter(id_instrumento__nombre__in=aforadores).values("fecha", "valor", "id_instrumento__nombre")
 

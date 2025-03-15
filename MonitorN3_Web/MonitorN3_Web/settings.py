@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'apps.medicion',
     'apps.graficos',
     'apps.presa',
+    'apps.estadistica',
 ]
 
 MIDDLEWARE = [
@@ -72,7 +73,7 @@ WSGI_APPLICATION = 'MonitorN3_Web.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "monitorn3_web",
+        "NAME": "pruebas_monitor",
         "USER": "root",
         "PASSWORD": "root",
         "HOST": "127.0.0.1",

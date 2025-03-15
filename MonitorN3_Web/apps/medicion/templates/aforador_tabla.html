@@ -43,7 +43,11 @@
                 <td>{{ fecha }}</td>
                 <td>{{ datos_tabla|key:fecha|key:"nivel_embalse"|default:"-" }}</td>
                 {% for nombre in nombres_aforadores %}
-                <td>{{ datos_tabla|key:fecha|key:nombre|default:"-" }}</td>
+                    {% with valor=datos_tabla|key:fecha|key:nombre %}
+                        <td>
+                            {% if valor is not None and valor != "" and valor != "None" %}{{ valor }}{% else %}-{% endif %}
+                        </td>
+                    {% endwith %}
                 {% endfor %}
             </tr>
             {% empty %}

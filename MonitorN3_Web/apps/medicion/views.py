@@ -1,5 +1,6 @@
 import json, math
 from datetime import datetime
+import pandas as pd
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from decimal import Decimal, InvalidOperation
@@ -223,44 +224,47 @@ def obtener_datos_tabla(tipo_instrumento, template, request):
     filtros_niveles = {}
 
     if fecha_inicio:
-        filtros_mediciones["fecha__gte"] = datetime.strptime(fecha_inicio, "%Y-%m-%d")
-        filtros_niveles["fecha__gte"] = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+        fecha_inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+        filtros_mediciones["fecha__gte"] = fecha_inicio_dt
+        filtros_niveles["fecha__gte"] = fecha_inicio_dt
 
     if fecha_fin:
-        filtros_mediciones["fecha__lte"] = datetime.strptime(fecha_fin, "%Y-%m-%d")
-        filtros_niveles["fecha__lte"] = datetime.strptime(fecha_fin, "%Y-%m-%d")
+        fecha_fin_dt = datetime.strptime(fecha_fin, "%Y-%m-%d")
+        filtros_mediciones["fecha__lte"] = fecha_fin_dt
+        filtros_niveles["fecha__lte"] = fecha_fin_dt
 
-    # Filtrar instrumentos según el tipo
-    instrumentos = Instrumento.objects.filter(id_tipo__nombre_tipo__icontains=tipo_instrumento)
+    instrumentos = Instrumento.objects.filter(id_tipo__nombre_tipo__icontains=tipo_instrumento).values("id", "nombre")
+    df_instrumentos = pd.DataFrame(list(instrumentos))
 
-    # Obtener mediciones y niveles de embalse
-    mediciones = Medicion.objects.filter(id_instrumento__in=instrumentos, **filtros_mediciones).order_by('-fecha')
-    niveles_embalse = Embalse.objects.filter(**filtros_niveles).order_by('-fecha')
+    mediciones = Medicion.objects.filter(id_instrumento_id__in=df_instrumentos["id"], **filtros_mediciones).values(
+        "fecha", "valor", "id_instrumento__nombre")
+    df_mediciones = pd.DataFrame(list(mediciones))
 
-    # Construcción de datos de la tabla
-    datos_tabla = {}
+    niveles_embalse = Embalse.objects.filter(**filtros_niveles).values("fecha", "nivel_embalse")
+    df_embalse = pd.DataFrame(list(niveles_embalse))
 
-    for nivel in niveles_embalse:
-        fecha = nivel.fecha.strftime("%d-%m-%Y")
-        if fecha not in datos_tabla:
-            datos_tabla[fecha] = {"nivel_embalse": nivel.nivel_embalse}
+    # Convertir fecha a formato `datetime`
+    df_mediciones["fecha"] = pd.to_datetime(df_mediciones["fecha"])
+    df_embalse["fecha"] = pd.to_datetime(df_embalse["fecha"])
 
-    for medicion in mediciones:
-        fecha = medicion.fecha.strftime("%d-%m-%Y")
-        instrumento = medicion.id_instrumento.nombre
-        valor = medicion.valor
+    if not df_mediciones.empty:
+        df_mediciones_pivot = df_mediciones.pivot_table(index="fecha", columns="id_instrumento__nombre", values="valor",
+                                                        aggfunc="first")
+    else:
+        df_mediciones_pivot = pd.DataFrame()
 
-        if fecha not in datos_tabla:
-            datos_tabla[fecha] = {"nivel_embalse": "-"}
+    df_final = df_embalse.merge(df_mediciones_pivot, on="fecha", how="outer").sort_values("fecha", ascending=False)
 
-        datos_tabla[fecha][instrumento] = valor
+    df_final["fecha"] = df_final["fecha"].dt.strftime("%d-%m-%Y")
 
-    fechas = sorted(datos_tabla.keys(), reverse=True)
-    nombres_instrumentos = [i.nombre for i in instrumentos]
+    df_final = df_final.fillna("-")
+
+    datos_tabla = df_final.set_index("fecha").to_dict(orient="index")
 
     contexto = {
-        "fechas": fechas,
-        "nombres_aforadores" if tipo_instrumento == "AFORADOR" else "nombres_piezometros" if tipo_instrumento == "PIEZÓMETRO" else "nombres_freatimetros": nombres_instrumentos,
+        "fechas": df_final["fecha"].tolist(),
+        "nombres_aforadores" if tipo_instrumento == "AFORADOR" else "nombres_piezometros" if tipo_instrumento == "PIEZÓMETRO" else "nombres_freatimetros":
+            df_instrumentos["nombre"].tolist(),
         "datos_tabla": datos_tabla,
         "fecha_inicio": fecha_inicio,
         "fecha_fin": fecha_fin,

@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}Estadística{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">Resumen Estadístico</h2>
+    <br>
+
+    <div class="form-container" style="color:black;">
+        <form method="get">
+            <div class="form-group">
+                <label for="parametro">Seleccione el parámetro:</label>
+                <select name="parametro" id="parametro" class="form-control">
+                    <option value="nivel_embalse" {% if parametro_seleccionado == "nivel_embalse" %}selected{% endif %}>Nivel de Embalse</option>
+                    <option value="nivel_piezometrico" {% if parametro_seleccionado == "nivel_piezometrico" %}selected{% endif %}>Nivel Piezométrico</option>
+                    <option value="nivel_freatico" {% if parametro_seleccionado == "nivel_freatico" %}selected{% endif %}>Nivel Freático</option>
+                    <option value="caudal" {% if parametro_seleccionado == "caudal" %}selected{% endif %}>Caudal</option>
+                </select>
+            </div>
+            <div style="text-align: center; ">
+                <button class="boton">GENERAR</button>
+                <style>
+                        .boton {
+                            background-color: #004080;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 20px;
+                            cursor: pointer;
+                            transition: background-color 0.3s ease;
+                        }
+
+                        .boton:hover {
+                            background-color: #0057AAFF;
+                            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+                        }
+                    </style>
+                </div>
+        </form>
+    </div>
+    <br>
+
+    <div class="form-container" style="color:black;">
+        <h3 class="text-center">📊 Estadísticas</h3>
+        {% if parametro_seleccionado == "nivel_piezometrico" or parametro_seleccionado == "caudal" or parametro_seleccionado == "nivel_freatico" %}
+            {% for instrumento, estadistica in estadisticas.items %}
+                <h4>{{ instrumento }}</h4>
+                <table class="table table-bordered">
+                    <tr><th>Media</th><td>{{ estadistica.media }}</td></tr>
+                    <tr><th>Mediana</th><td>{{ estadistica.mediana }}</td></tr>
+                    <tr><th>Moda</th><td>{{ estadistica.moda }}</td></tr>
+                    <tr><th>Máximo</th><td>{{ estadistica.maximo }}</td></tr>
+                    <tr><th>Mínimo</th><td>{{ estadistica.minimo }}</td></tr>
+                    <tr><th>Desviación Estándar</th><td>{{ estadistica.desviacion_estandar }}</td></tr>
+                    <tr><th>Datos Faltantes</th><td>{{ estadistica.datos_faltantes }}</td></tr>
+                    <tr><th>Datos Fuera de Rango</th><td>{{ estadistica.fuera_de_rango }}</td></tr>
+                </table>
+                <br>
+            {% endfor %}
+        {% else %}
+
+        <table class="table table-bordered">
+            <tr><th>Media</th><td>{{ estadisticas.media }}</td></tr>
+            <tr><th>Mediana</th><td>{{ estadisticas.mediana }}</td></tr>
+            <tr><th>Moda</th><td>{{ estadisticas.moda }}</td></tr>
+            <tr><th>Máximo</th><td>{{ estadisticas.maximo }}</td></tr>
+            <tr><th>Mínimo</th><td>{{ estadisticas.minimo }}</td></tr>
+            <tr><th>Desviación Estándar</th><td>{{ estadisticas.desviacion_estandar }}</td></tr>
+            <tr><th>Datos Faltantes</th><td>{{ estadisticas.datos_faltantes }}</td></tr>
+            <tr><th>Datos Fuera de Rango</th><td>{{ estadisticas.fuera_de_rango }}</td></tr>
+        </table>
+        {% endif %}
+    </div>
+
+    <br>
+
+    <h3 class="text-center">📈 Distribución de Datos</h3>
+    {% for hist in grafico_histograma %}
+        <div>{{ hist|safe }}</div>
+        <br>
+    {% endfor %}
+
+    <br>
+
+    <h3 class="text-center">📉 Evolución de Datos</h3>
+    <div>{{ grafico_linea|safe }}</div>
+</div>
+{% endblock %}

@@ -30,7 +30,6 @@ def nivelembalse(request):
     return render(request, "embalse_form.html", {"embalse_form": embalse_form})
 
 def embalse_precipitacion_tabla(request):
-
     fecha_inicio = request.GET.get('fecha_inicio')
     fecha_fin = request.GET.get('fecha_fin')
 
@@ -39,33 +38,28 @@ def embalse_precipitacion_tabla(request):
     if fecha_fin:
         fecha_fin = datetime.strptime(fecha_fin, "%Y-%m-%d").date()
 
-    fechas_embalse = Embalse.objects.values_list('fecha', flat=True).distinct()
-    fechas_precipitacion = Precipitacion.objects.values_list('fecha', flat=True).distinct()
+    embalses = Embalse.objects.values('fecha', 'nivel_embalse')
+    embalse_dict = {e['fecha']: e['nivel_embalse'] for e in embalses}
 
-    todas_las_fechas = sorted(set(fechas_embalse) | set(fechas_precipitacion), reverse=True)
+    precipitaciones = Precipitacion.objects.values('fecha').annotate(total=Sum('valor'))
+    precipitacion_dict = {p['fecha']: p['total'] for p in precipitaciones}
+
+    todas_las_fechas = sorted(set(embalse_dict.keys()) | set(precipitacion_dict.keys()), reverse=True)
 
     if fecha_inicio and fecha_fin:
         todas_las_fechas = [f for f in todas_las_fechas if fecha_inicio <= f <= fecha_fin]
 
     datos_tabla = []
     for fecha in todas_las_fechas:
-        nivel_embalse = Embalse.objects.filter(fecha=fecha).first()
-        nivel_embalse_valor = nivel_embalse.nivel_embalse if nivel_embalse else "-"
-
-        precipitaciones = {
-            "del_dia": Precipitacion.objects.filter(fecha=fecha).aggregate(Sum('valor'))['valor__sum'] or "-",
-            "tres_dias": Precipitacion.objects.filter(fecha=fecha - timedelta(days=3)).aggregate(Sum('valor'))[
-                             'valor__sum'] or "-",
-            "cinco_dias": Precipitacion.objects.filter(fecha=fecha - timedelta(days=5)).aggregate(Sum('valor'))[
-                              'valor__sum'] or "-",
-            "diez_dias": Precipitacion.objects.filter(fecha=fecha - timedelta(days=10)).aggregate(Sum('valor'))[
-                             'valor__sum'] or "-",
-        }
-
         datos_tabla.append({
             "fecha": fecha.strftime("%d-%m-%Y"),
-            "nivel_embalse": nivel_embalse_valor,
-            "precipitaciones": precipitaciones,
+            "nivel_embalse": embalse_dict.get(fecha, "-"),
+            "precipitaciones": {
+                "del_dia": precipitacion_dict.get(fecha, "-"),
+                "tres_dias": precipitacion_dict.get(fecha - timedelta(days=3), "-"),
+                "cinco_dias": precipitacion_dict.get(fecha - timedelta(days=5), "-"),
+                "diez_dias": precipitacion_dict.get(fecha - timedelta(days=10), "-"),
+            }
         })
 
     contexto = {
