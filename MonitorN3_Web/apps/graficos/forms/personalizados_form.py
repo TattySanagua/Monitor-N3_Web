@@ -51,6 +51,7 @@ class PersonalizadoForm(forms.Form):
         ('nivel_piezometrico', 'Nivel Piezométrico'),
         ('nivel_freatico', 'Nivel Freático'),
         ('caudal', 'Caudal'),
+        ('precipitacion', 'Precipitacion'),
     ]
 
     eje_y = forms.ChoiceField(

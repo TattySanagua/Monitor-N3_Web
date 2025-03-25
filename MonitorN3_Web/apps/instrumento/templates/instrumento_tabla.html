@@ -61,7 +61,7 @@
 
     <!-- Tabla -->
     <div class="table-responsive mi-tabla">
-        <table class="table table-bordered table-striped text-center table-hover mi-tabla-tabla" style="vertical-align: middle;">
+        <table class="table table-bordered table-striped text-center table-hover mi-tabla-tabla" style="vertical-align: middle;overflow: auto; max-height: 300px;">
             <thead class="table-dark mi-tabla-thead">
                 <tr>
                     <th>Nombre</th>
@@ -88,9 +88,9 @@
                             <span class="badge bg-danger">No</span>
                         {% endif %}
                     </td>
-                    <td>
+                    <td style="text-align:left;">
                         {% for parametro in instrumento.parametro_set.all %}
-                            <strong>{{ parametro.nombre_parametro }}:</strong> {{ parametro.valor }}<br>
+                            <strong>{{ parametro.nombre_parametro }}:</strong> {{ parametro.valor|floatformat:2 }}<br>
                         {% empty %}
                             <em>-</em>
                         {% endfor %}

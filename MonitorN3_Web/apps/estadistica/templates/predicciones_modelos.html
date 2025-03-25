@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Análisis de Serie de Tiempo{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">📊 Análisis de la Serie de Tiempo - Nivel de Embalse</h2>
+    <br>
+
+    <!-- 🔹 Selector de período para la media móvil -->
+    <div class="form-container" style="color:black;">
+        <form method="GET" class="mb-3">
+            <label for="periodo">Seleccionar período de media móvil:</label>
+            <select name="periodo" id="periodo" class="form-control">
+                <option value="6" {% if periodo_seleccionado == 6 %}selected{% endif %}>6 meses</option>
+                <option value="12" {% if periodo_seleccionado == 12 %}selected{% endif %}>12 meses (anual)</option>
+                <option value="24" {% if periodo_seleccionado == 24 %}selected{% endif %}>2 años</option>
+                <option value="60" {% if periodo_seleccionado == 60 %}selected{% endif %}>5 años</option>
+            </select>
+            <br>
+            <div style="text-align: center; ">
+                <button class="boton">GENERAR</button>
+                <style>
+                        .boton {
+                            background-color: #004080;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 20px;
+                            cursor: pointer;
+                            transition: background-color 0.3s ease;
+                        }
+
+                        .boton:hover {
+                            background-color: #0057AAFF;
+                            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+                        }
+                    </style>
+                </div>
+        </form>
+    </div>
+    <br>
+    <h3 class="text-center">📉 Evolución con Media Móvil</h3>
+    <div class="mt-3">{{ grafico_evolucion|safe }}</div>
+    <br>
+    <h3 class="text-center">📊 Descomposición de la Serie</h3>
+    <div class="mt-3">{{ grafico_descomposicion|safe }}</div>
+    <br>
+    <h3>Correlograma: ACF (Autocorrelación)</h3>
+    {{ grafico_acf|safe }}
+    <br>
+    <h3>Correlograma: PACF (Autocorrelación Parcial)</h3>
+    {{ grafico_pacf|safe }}
+    <br>
+    <h3 class="text-center">📊 Modelos AR, MA y ARMA</h3>
+    <div class="mt-3">{{ grafico_predicciones|safe }}</div>
+    <br>
+    <h3 class="text-center">📊 Predicciones futuras</h3>
+    <div class="mt-3">{{ grafico_futuro|safe }}</div>
+    <br>
+    <h3 class="text-center">📊 Prueba de Estacionariedad (Dickey-Fuller)</h3>
+    <table class="table table-bordered">
+        <tr><th>¿Es Estacionaria?</th><td>{{ es_estacionaria }}</td></tr>
+        <tr><th>p-valor</th><td>{{ p_valor }}</td></tr>
+    </table>
+</div>
+{% endblock %}

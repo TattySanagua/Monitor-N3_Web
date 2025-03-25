@@ -1,10 +1,10 @@
 from decimal import Decimal
 from django.forms import modelformset_factory
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import get_object_or_404
 from .models import Parametro, Tipo, Instrumento
 from . forms.instrumento_form import InstrumentoForm, InstrumentoUpdateForm, ParametroForm
 from django.utils.timezone import now
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 import openpyxl
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
@@ -33,9 +33,9 @@ def crear_instrumento(request):
 
             if tipo_nombre in ["PIEZÓMETRO", "FREATÍMETRO"]:
                 parametros = [
-                    {"nombre_parametro": "cb", "valor": Decimal(request.POST.get("cb", "0"))},  # 🔹 Usamos Decimal
+                    {"nombre_parametro": "cb", "valor": Decimal(request.POST.get("cb", "0"))},
+                    {"nombre_parametro": "ci", "valor": Decimal(request.POST.get("ci", "0"))},
                     {"nombre_parametro": "angulo", "valor": Decimal(request.POST.get("angulo", "0"))},
-                    # 🔹 Usamos Decimal
                 ]
             elif tipo_nombre == "AFORADOR PARSHALL":
                 parametros = [
@@ -122,22 +122,28 @@ def instrumento_modificar(request, instrumento_id):
 
 
 def export_instrumentos_excel(request):
-    instrumentos = Instrumento.objects.all()
+    instrumentos = Instrumento.objects.prefetch_related("parametro_set").all()
 
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Instrumentos"
 
-    headers = ["Nombre", "Tipo", "Fecha de Alta", "Fecha de Baja", "Activo"]
+    headers = ["Nombre", "Tipo", "Fecha de Alta", "Fecha de Baja", "Activo", "Parámetros"]
     ws.append(headers)
 
     for instrumento in instrumentos:
+        parametros = ", ".join(
+            f"{parametro.nombre_parametro}={parametro.valor}"
+            for parametro in instrumento.parametro_set.all()
+        ) or "-"
+
         ws.append([
             instrumento.nombre,
             instrumento.id_tipo.nombre_tipo,
             instrumento.fecha_alta.strftime("%d/%m/%Y") if instrumento.fecha_alta else "-",
             instrumento.fecha_baja.strftime("%d/%m/%Y") if instrumento.fecha_baja else "-",
-            "Sí" if instrumento.activo else "No"
+            "Sí" if instrumento.activo else "No",
+            parametros
         ])
 
     response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
@@ -146,7 +152,7 @@ def export_instrumentos_excel(request):
     return response
 
 def export_instrumentos_pdf(request):
-    instrumentos = Instrumento.objects.all()
+    instrumentos = Instrumento.objects.prefetch_related("parametro_set").all()
 
     response = HttpResponse(content_type="application/pdf")
     response["Content-Disposition"] = 'attachment; filename="instrumentos.pdf"'
@@ -157,15 +163,21 @@ def export_instrumentos_pdf(request):
     p.setFont("Helvetica-Bold", 16)
     p.drawString(30, height - 40, "Lista de Instrumentos")
 
-    data = [["Nombre", "Tipo", "Fecha de Alta", "Fecha de Baja", "Activo"]]
+    data = [["Nombre", "Tipo", "Fecha de Alta", "Fecha de Baja", "Activo", "Parámetros"]]
 
     for instrumento in instrumentos:
+        parametros = ", ".join(
+            f"{parametro.nombre_parametro}={parametro.valor}"
+            for parametro in instrumento.parametro_set.all()
+        ) or "-"
+
         data.append([
             instrumento.nombre,
             instrumento.id_tipo.nombre_tipo,
             instrumento.fecha_alta.strftime("%d/%m/%Y") if instrumento.fecha_alta else "-",
             instrumento.fecha_baja.strftime("%d/%m/%Y") if instrumento.fecha_baja else "-",
-            "Sí" if instrumento.activo else "No"
+            "Sí" if instrumento.activo else "No",
+            parametros
         ])
 
     table = Table(data)

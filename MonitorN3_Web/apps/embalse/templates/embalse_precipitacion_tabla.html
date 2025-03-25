@@ -19,21 +19,19 @@
         </div>
 
         <!-- Tabla -->
-        <div class="table-responsive mi-tabla">
+        <div class="table-responsive mi-tabla" style="overflow: auto; max-height: 600px;">
             <table class="table table-bordered table-striped text-center table-hover mi-tabla-tabla">
                 <thead class="table-dark mi-tabla-thead">
                     <tr>
                         <th>Fecha</th>
                         <th>Nivel Embalse</th>
-                        <th colspan="4">Precipitaciones [mm]</th>
+                        <th>Precipitación</th>
                     </tr>
                     <tr>
                         <th>dd-mm-YYYY</th>
                         <th>[msnm]</th>
-                        <th>Del Día</th>
-                        <th>3 Días Antes</th>
-                        <th>5 Días Antes</th>
-                        <th>10 Días Antes</th>
+                        <th>[mm]</th>
+
                     </tr>
                 </thead>
                 <tbody>
@@ -41,10 +39,7 @@
                         <tr>
                             <td>{{ fila.fecha }}</td>
                             <td>{{ fila.nivel_embalse }}</td>
-                            <td>{{ fila.precipitaciones.del_dia }}</td>
-                            <td>{{ fila.precipitaciones.tres_dias }}</td>
-                            <td>{{ fila.precipitaciones.cinco_dias }}</td>
-                            <td>{{ fila.precipitaciones.diez_dias }}</td>
+                            <td>{{ fila.precipitaciones }}</td>
                         </tr>
                     {% empty %}
                         <tr>

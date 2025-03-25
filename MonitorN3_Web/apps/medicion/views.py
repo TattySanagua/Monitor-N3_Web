@@ -1,17 +1,16 @@
 import json, math
 from datetime import datetime
 import pandas as pd
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from decimal import Decimal, InvalidOperation
-from django.contrib import messages
 from .forms.medicion_form import MedicionPiezometroForm, MedicionFreatimetroForm, MedicionAforadorVolumetrico, MedicionAforadorParshall
 from ..instrumento.models import Parametro, Instrumento
 from ..embalse.models import Embalse
 from .models import Medicion
-import openpyxl
 from reportlab.lib.pagesizes import letter, landscape
-from reportlab.pdfgen import canvas
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 
@@ -282,45 +281,46 @@ def freatimetro_tabla(request):
     return obtener_datos_tabla("FREATÍMETRO", "freatimetro_tabla.html", request)
 
 
+def obtener_datos_instrumento(instrumentos):
+
+    mediciones = Medicion.objects.filter(id_instrumento__in=instrumentos).values(
+        'fecha', 'id_instrumento__nombre', 'valor'
+    ).order_by("fecha")
+
+    niveles_embalse = Embalse.objects.values('fecha', 'nivel_embalse')
+
+    df_mediciones = pd.DataFrame(list(mediciones))
+    df_niveles = pd.DataFrame(list(niveles_embalse))
+
+    df_mediciones['fecha'] = pd.to_datetime(df_mediciones['fecha'])
+    df_niveles['fecha'] = pd.to_datetime(df_niveles['fecha'])
+
+    df_mediciones = df_mediciones.pivot_table(
+        index='fecha', columns='id_instrumento__nombre', values='valor', aggfunc='first'
+    )
+
+    df_niveles.set_index('fecha', inplace=True)
+    df_final = df_niveles.join(df_mediciones, how='outer')
+
+    df_final = df_final.fillna("-")
+
+    df_final = df_final.sort_index(ascending=False)
+
+    return df_final
+
 def export_instrumento_excel(request, instrumentos, filename, sheet_title):
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = sheet_title
 
-    mediciones = Medicion.objects.filter(id_instrumento__in=instrumentos).order_by('-fecha')
-    niveles_embalse = Embalse.objects.all().order_by('-fecha')
+    df = obtener_datos_instrumento(instrumentos)
 
-    datos_tabla = {}
-
-    for nivel in niveles_embalse:
-        fecha = nivel.fecha.strftime("%d-%m-%Y")
-        if fecha not in datos_tabla:
-            datos_tabla[fecha] = {"nivel_embalse": nivel.nivel_embalse}
-
-    for medicion in mediciones:
-        fecha = medicion.fecha.strftime("%d-%m-%Y")
-        instrumento = medicion.id_instrumento.nombre
-        valor = medicion.valor
-
-        if fecha not in datos_tabla:
-            datos_tabla[fecha] = {"nivel_embalse": "-"}
-
-        datos_tabla[fecha][instrumento] = valor
-
-    fechas = sorted(datos_tabla.keys(), reverse=True)
-    nombres_instrumentos = [p.nombre for p in instrumentos]
-
-    ws.append(["Fecha", "Nivel Embalse"] + nombres_instrumentos)
-
-    for fecha in fechas:
-        row = [fecha, datos_tabla.get(fecha, {}).get("nivel_embalse", "-")]
-        for nombre in nombres_instrumentos:
-            row.append(datos_tabla.get(fecha, {}).get(nombre, "-"))
-        ws.append(row)
+    with pd.ExcelWriter(filename, engine='openpyxl') as writer:
+        df.to_excel(writer, sheet_name=sheet_title, index=True)
 
     response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    wb.save(response)
+
+    with open(filename, 'rb') as f:
+        response.write(f.read())
+
     return response
 
 
@@ -338,43 +338,21 @@ def export_aforador_excel(request):
 
 
 def export_instrumento_pdf(request, instrumentos, filename, titulo):
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    df = obtener_datos_instrumento(instrumentos)
 
-    p = canvas.Canvas(response, pagesize=landscape(letter))
-    width, height = landscape(letter)
+    response = HttpResponse(content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
 
-    p.setFont("Helvetica-Bold", 16)
-    p.drawString(30, height - 40, f"{titulo} - Mediciones")
+    doc = SimpleDocTemplate(response, pagesize=landscape(letter))
+    elements = []
 
-    mediciones = Medicion.objects.filter(id_instrumento__in=instrumentos).order_by('-fecha')
-    niveles_embalse = Embalse.objects.all().order_by('-fecha')
+    styles = getSampleStyleSheet()
+    title = Paragraph(titulo, styles["Title"])
+    elements.append(title)
 
-    datos_tabla = {}
-    for nivel in niveles_embalse:
-        fecha = nivel.fecha.strftime("%d-%m-%Y")
-        datos_tabla[fecha] = {"nivel_embalse": nivel.nivel_embalse}
+    df_reset = df.reset_index()
 
-    for medicion in mediciones:
-        fecha = medicion.fecha.strftime("%d-%m-%Y")
-        instrumento = medicion.id_instrumento.nombre
-        valor = medicion.valor
-
-        if fecha not in datos_tabla:
-            datos_tabla[fecha] = {"nivel_embalse": "-"}
-
-        datos_tabla[fecha][instrumento] = valor
-
-    fechas = sorted(datos_tabla.keys(), reverse=True)
-    nombres_instrumentos = [i.nombre for i in instrumentos]
-
-    tabla_data = [["Fecha", "Nivel Embalse [msnm]"] + nombres_instrumentos]
-
-    for fecha in fechas:
-        fila = [fecha, datos_tabla.get(fecha, {}).get("nivel_embalse", "-")]
-        for nombre in nombres_instrumentos:
-            fila.append(datos_tabla.get(fecha, {}).get(nombre, "-"))
-        tabla_data.append(fila)
+    tabla_data = [df_reset.columns.tolist()] + df_reset.fillna("-").values.tolist()
 
     table = Table(tabla_data)
     table.setStyle(TableStyle([
@@ -387,11 +365,9 @@ def export_instrumento_pdf(request, instrumentos, filename, titulo):
         ('GRID', (0, 0), (-1, -1), 1, colors.black),
     ]))
 
-    table.wrapOn(p, width, height)
-    table.drawOn(p, 30, height - 100 - (len(tabla_data) * 20))
+    elements.append(table)
+    doc.build(elements)
 
-    p.showPage()
-    p.save()
     return response
 
 def export_piezometro_pdf(request):

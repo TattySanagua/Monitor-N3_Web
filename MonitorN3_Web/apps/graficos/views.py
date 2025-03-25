@@ -7,20 +7,21 @@ from .forms.personalizados_form import PersonalizadoForm
 from ..instrumento.models import Instrumento
 from ..embalse.models import Embalse
 from ..medicion.models import Medicion
+from ..precipitacion.models import Precipitacion
 
 GRAFICOS_PREDEFINIDOS = {
-    "fecha_nivel_embalse": "Fecha - Nivel Embalse",
-    "fecha_nivel_piezometrico_pc1_7": "Fecha - Nivel Piezométrico (PC1-2-3-4-5-6-7)",
-    "fecha_nivel_piezometrico_pc1_5_6": "Fecha - Nivel Piezométrico (PC1-5-6)",
-    "fecha_nivel_piezometrico_f1_pc2_3_4": "Fecha - Nivel Piezométrico (F1-PC2-3-4)",
+    "fecha_nivel_embalse": "Cronológico - Nivel Embalse",
+    "fecha_nivel_piezometrico_pc1_7": "Cronológico (PC1-2-3-4-5-6-7)",
+    "fecha_nivel_piezometrico_pc1_5_6": "Cronológico (PC1-5-6)",
+    "fecha_nivel_piezometrico_f1_pc2_3_4": "Cronológico (F1-PC2-3-4)",
     "nivel_embalse_nivel_piezometrico_pc1_5_6": "Nivel Embalse - Nivel Piezométrico (PC1-5-6)",
-    "nivel_embalse_nivel_piezometrico_f1_pc2_3_4": "Nivel Embalse - Nivel Piezométrico (F1-PC2-3-4)",
+    "nivel_embalse_nivel_piezometrico_f1_pc2_3_4": "Nivel Embalse - Nivel Piezométrico (L3-PC4)",
     "nivel_embalse_nivel_freatico_f1": "Nivel Embalse - Nivel Freático (F1)",
     "nivel_embalse_caudal_afo3_tot": "Nivel Embalse - Caudal (AFo3-TOT)",
     "nivel_embalse_caudal_afo3_ei": "Nivel Embalse - Caudal (AFo3-EI)",
     "nivel_embalse_caudal_afo3_pp": "Nivel Embalse - Caudal (AFo3-PP)",
-    "fecha_nivel_embalse_caudal_afo3_tot": "Fecha - Nivel Embalse - Caudal (AFo3-TOT)",
-    "fecha_nivel_embalse_caudal_afo3_pp": "Fecha - Nivel Embalse - Caudal (AFo3-PP)",
+    "fecha_nivel_embalse_caudal_afo3_tot": "Cronológico - Nivel Embalse - Caudal (AFo3-TOT)",
+    "fecha_nivel_embalse_caudal_afo3_pp": "Cronológico - Nivel Embalse - Caudal (AFo3-PP)",
 }
 
 def predefinidos(request):
@@ -172,9 +173,10 @@ def generar_grafico_predefinido(request):
             )
 
         elif seleccion == "nivel_embalse_nivel_piezometrico_f1_pc2_3_4":
-            piezometros = ["L3-F1", "L3-PC2", "L3-PC3", "L3-PC4"]
+            piezometros = ["L3-PC4"]
             embalse_data = Embalse.objects.all().values("fecha", "nivel_embalse")
-            piezometro_data = Medicion.objects.filter(id_instrumento__nombre__in=piezometros).values("fecha", "valor", "id_instrumento__nombre")
+            piezometro_data = Medicion.objects.filter(id_instrumento__nombre__in=piezometros).values("fecha", "valor",
+                                                                                                     "id_instrumento__nombre")
 
             df_embalse = pd.DataFrame(list(embalse_data))
             df_piezometro = pd.DataFrame(list(piezometro_data))
@@ -185,7 +187,7 @@ def generar_grafico_predefinido(request):
             df_final = pd.merge(df_piezometro, df_embalse, on="fecha", how="inner")
 
             df_final["año"] = df_final["fecha"].dt.year
-            print(df_final)
+
             fig = go.Figure()
 
             for piezometro in piezometros:
@@ -202,11 +204,34 @@ def generar_grafico_predefinido(request):
                             marker=dict(symbol="circle", size=8)
                         )
                     )
+
+            min_nivel_embalse = df_final["nivel_embalse"].min()
+            max_nivel_embalse = df_final["nivel_embalse"].max()
+
+            extend_range = 5  # Extender 5 unidades hacia la derecha
+            max_extendido = max_nivel_embalse + extend_range
+
+            nivel_embalse_line = list(range(int(min_nivel_embalse), int(max_extendido) + 1))
+
+            # nivel_minimo = [x * 0.42 + 347.08 if x > 598.5 else None for x in nivel_embalse_line]
+            # nivel_esperado = [x * 0.24 + 454.79 if x > 598.5 else None for x in nivel_embalse_line]
+            # nivel_optimo = [x * 0.07 + 556.52 if x > 598.5 else None for x in nivel_embalse_line]
+
+            nivel_minimo = [x * 0.42 + 347.08 for x in nivel_embalse_line]
+            nivel_esperado = [x * 0.24 + 454.79 for x in nivel_embalse_line]
+            nivel_optimo = [x * 0.07 + 556.52 for x in nivel_embalse_line]
+
+            fig.add_trace(go.Scatter(x=nivel_embalse_line, y=nivel_minimo, mode='lines', name='Mínimo', line=dict(color='black', width=2.5)))
+            fig.add_trace(go.Scatter(x=nivel_embalse_line, y=nivel_esperado, mode='lines', name='Esperado', line=dict(color='red', width=2.5)))
+            fig.add_trace(go.Scatter(x=nivel_embalse_line, y=nivel_optimo, mode='lines', name='Óptimo', line=dict(color='green', width=2.5)))
+
+
             fig.update_layout(
-                title="Nivel Embalse - Nivel Piezométrico (F1-PC2-3-4)",
+                title="Nivel Embalse - Nivel Piezométrico (L3-PC4) con Umbrales",
                 xaxis_title="Nivel Embalse (msnm)",
                 yaxis_title="Nivel Piezométrico (msnm)",
-                legend_title="Piezómetro (Año)"
+                legend_title="Piezómetro (Año) / Umbral",
+                height=700
             )
 
         elif seleccion == "nivel_embalse_nivel_freatico_f1":
@@ -456,6 +481,12 @@ def generar_grafico_predefinido(request):
 def personalizados(request):
     form = PersonalizadoForm()
 
+    años_embalse = Embalse.objects.dates("fecha", "year").values_list("fecha", flat=True)
+    años_medicion = Medicion.objects.dates("fecha", "year").values_list("fecha", flat=True)
+    años_precipitacion = Precipitacion.objects.dates("fecha", "year").values_list("fecha", flat=True)
+
+    años_unicos = sorted(set(año.year for año in list(años_embalse) + list(años_medicion) + list(años_precipitacion)))
+
     piezometros = list(Instrumento.objects.filter(id_tipo__nombre_tipo="PIEZÓMETRO").values("id", "nombre"))
     freatimetros = list(Instrumento.objects.filter(id_tipo__nombre_tipo="FREATÍMETRO").values("id", "nombre"))
     aforadores = list(Instrumento.objects.filter(id_tipo__nombre_tipo__icontains="AFORADOR").values("id", "nombre"))
@@ -464,7 +495,8 @@ def personalizados(request):
         "personalizados_form": form,
         "piezometros_json": json.dumps(piezometros),
         "freatimetros_json": json.dumps(freatimetros),
-        "aforadores_json": json.dumps(aforadores)
+        "aforadores_json": json.dumps(aforadores),
+        "años_unicos": años_unicos
     }
 
     return render(request, "personalizados_form.html", contexto)
@@ -474,6 +506,9 @@ def generar_grafico(request):
         return JsonResponse({"error": "Método no permitido"}, status=405)
 
     data = request.POST.copy()
+
+    fecha_inicio = data.get("fecha_inicio")
+    fecha_fin = data.get("fecha_fin")
 
     for campo in ["instrumento_x", "instrumento_y", "instrumento_y2"]:
         if campo in data:
@@ -498,52 +533,126 @@ def generar_grafico(request):
     try:
         fechas_embalse = Embalse.objects.values("fecha").distinct()
         fechas_medicion = Medicion.objects.values("fecha").distinct()
-        todas_las_fechas = pd.DataFrame(list(fechas_embalse) + list(fechas_medicion)).drop_duplicates().sort_values("fecha")
+        fechas_precipitacion = Precipitacion.objects.values("fecha").distinct()
+        todas_las_fechas = pd.DataFrame(list(fechas_embalse) + list(fechas_medicion) + list(fechas_precipitacion)).drop_duplicates().sort_values("fecha")
         todas_las_fechas["fecha"] = pd.to_datetime(todas_las_fechas["fecha"])
 
         #Datos eje X
         df_x = todas_las_fechas.copy()
+
         if eje_x == "nivel_embalse":
             df_x = pd.DataFrame(list(Embalse.objects.values("fecha", "nivel_embalse")))
-            df_x.rename(columns={"nivel_embalse": "valor_x"}, inplace=True)
-        elif eje_x in ["nivel_piezometrico", "nivel_freatico", "caudal"] and instrumentos_x:
-            datos_x = Medicion.objects.filter(id_instrumento__in=instrumentos_x).values("fecha", "valor", "id_instrumento__nombre")
-            df_x = pd.DataFrame(list(datos_x))
-            df_grouped = df_x.groupby(["fecha", "id_instrumento__nombre"])["valor"].mean().reset_index()
-            df_x = df_grouped.pivot(index="fecha", columns="id_instrumento__nombre", values="valor").reset_index()
+            # df_x.rename(columns={"nivel_embalse": "valor_x"}, inplace=True)
+
+        elif eje_x == "precipitacion":
+            df_x = pd.DataFrame(list(Precipitacion.objects.values("fecha", "valor")))
+            # df_x.rename(columns={"valor": "valor_x"}, inplace=True)
+
+        elif eje_x in ["nivel_piezometrico", "nivel_freatico", "caudal"]:
+            if instrumentos_x:
+                datos_x = Medicion.objects.filter(id_instrumento__in=instrumentos_x).values("fecha", "valor",
+                                                                                            "id_instrumento__nombre")
+                df_x = pd.DataFrame(list(datos_x))
+
+                if not df_x.empty:
+                    df_grouped = df_x.groupby(["fecha", "id_instrumento__nombre"])["valor"].mean().reset_index()
+                    df_x = df_grouped.pivot(index="fecha", columns="id_instrumento__nombre",
+                                            values="valor").reset_index()
+            else:
+                df_x = pd.DataFrame(columns=["fecha", "valor_x"])
 
         df_x["fecha"] = pd.to_datetime(df_x["fecha"])
 
         #Datos eje Y
         df_y = todas_las_fechas.copy()
+
         if eje_y == "nivel_embalse":
             df_y = pd.DataFrame(list(Embalse.objects.values("fecha", "nivel_embalse")))
             df_y.rename(columns={"nivel_embalse": "valor_y"}, inplace=True)
+
+        elif eje_y == "precipitacion":
+            df_y = pd.DataFrame(list(Precipitacion.objects.values("fecha", "valor")))
+            if not df_y.empty:
+                df_y.rename(columns={"valor": "valor_y"}, inplace=True)
+                df_y["fecha"] = pd.to_datetime(df_y["fecha"])
+
         elif eje_y in ["nivel_piezometrico", "nivel_freatico", "caudal"] and instrumentos_y:
-            datos_y = Medicion.objects.filter(id_instrumento__in=instrumentos_y).values("fecha", "valor", "id_instrumento__nombre")
+            datos_y = Medicion.objects.filter(id_instrumento__in=instrumentos_y).values("fecha", "valor",
+                                                                                        "id_instrumento__nombre")
             df_y = pd.DataFrame(list(datos_y))
-            df_grouped = df_y.groupby(["fecha", "id_instrumento__nombre"])["valor"].mean().reset_index()
-            df_y = df_grouped.pivot(index="fecha", columns="id_instrumento__nombre", values="valor").reset_index()
+
+            if not df_y.empty:
+                df_grouped = df_y.groupby(["fecha", "id_instrumento__nombre"])["valor"].mean().reset_index()
+                df_y = df_grouped.pivot(index="fecha", columns="id_instrumento__nombre", values="valor").reset_index()
 
         df_y["fecha"] = pd.to_datetime(df_y["fecha"])
 
         #Datos eje Y Secundario (si está habilitado)
         df_y2 = None
-        if agregar_eje_y_secundario and eje_y_secundario and instrumentos_y2:
-            datos_y2 = Medicion.objects.filter(id_instrumento__in=instrumentos_y2).values("fecha", "valor", "id_instrumento__nombre")
-            df_y2 = pd.DataFrame(list(datos_y2))
-            df_grouped = df_y2.groupby(["fecha", "id_instrumento__nombre"])["valor"].mean().reset_index()
-            df_y2 = df_grouped.pivot(index="fecha", columns="id_instrumento__nombre", values="valor").reset_index()
 
-            df_y2["fecha"] = pd.to_datetime(df_y2["fecha"])
+        if agregar_eje_y_secundario and eje_y_secundario:
+            if eje_y_secundario == "precipitacion":
+                df_y2 = pd.DataFrame(list(Precipitacion.objects.values("fecha", "valor")))
+                if not df_y2.empty:
+                    df_y2.rename(columns={"valor": "valor_y2"}, inplace=True)
+                    df_y2["fecha"] = pd.to_datetime(df_y2["fecha"])
+            elif eje_y_secundario == "nivel_embalse":
+                df_y2 = pd.DataFrame(list(Embalse.objects.values("fecha", "nivel_embalse")))
+                df_y2.rename(columns={"nivel_embalse": "valor_y2"}, inplace=True)
+                df_y2["fecha"] = pd.to_datetime(df_y2["fecha"])
 
-        #Unión de DataFrames
-        df_final = df_x.merge(df_y, on="fecha", how="outer")
-        if df_y2 is not None:
+            elif instrumentos_y2:
+                datos_y2 = Medicion.objects.filter(id_instrumento__in=instrumentos_y2).values("fecha", "valor",
+                                                                                              "id_instrumento__nombre")
+                df_y2 = pd.DataFrame(list(datos_y2))
+
+                if not df_y2.empty:
+                    df_grouped = df_y2.groupby(["fecha", "id_instrumento__nombre"])["valor"].mean().reset_index()
+                    df_y2 = df_grouped.pivot(index="fecha", columns="id_instrumento__nombre",
+                                             values="valor").reset_index()
+                    df_y2["fecha"] = pd.to_datetime(df_y2["fecha"])
+
+        fechas_comunes = df_x["fecha"].isin(df_y["fecha"])
+        df_x = df_x[fechas_comunes]
+        df_y = df_y[df_y["fecha"].isin(df_x["fecha"])]
+
+        # Unión de DataFrames
+        if eje_y == "nivel_embalse" or eje_y_secundario == "nivel_embalse":
+            df_embalse = pd.DataFrame(list(Embalse.objects.values("fecha", "nivel_embalse")))
+            df_embalse.rename(columns={"nivel_embalse": "valor_embalse"}, inplace=True)
+            df_embalse["fecha"] = pd.to_datetime(df_embalse["fecha"])
+
+            df_final = df_embalse.merge(df_x, on="fecha", how="outer").merge(df_y, on="fecha", how="outer")
+        else:
+            df_final = df_x.merge(df_y, on="fecha", how="inner")
+
+
+        if df_y2 is not None and not df_y2.empty:
+            df_y2 = df_y2[df_y2["fecha"].isin(df_final["fecha"])]
             df_final = df_final.merge(df_y2, on="fecha", how="outer")
 
         df_final.sort_values("fecha", inplace=True)
-        #print(df_final)
+
+        print("df_final después del merge:", df_final)
+
+        if fecha_inicio and fecha_fin:
+            fecha_inicio = pd.to_datetime(fecha_inicio)
+            fecha_fin = pd.to_datetime(fecha_fin)
+            df_final["destacado"] = df_final["fecha"].between(fecha_inicio, fecha_fin)
+        else:
+            df_final["destacado"] = False
+
+        fecha_inicio_str = fecha_inicio.strftime("%d-%m-%Y") if fecha_inicio else "Inicio"
+        fecha_fin_str = fecha_fin.strftime("%d-%m-%Y") if fecha_fin else "Fin"
+        periodo = f"{fecha_inicio_str} a {fecha_fin_str}"
+
+        df_destacado = df_final[df_final["destacado"]]
+
+        color_normal = "#377BEF"
+        color_destacado = "#EF6376"
+        color_secundario = "#87C19B"
+
+        print("df_destacado:", df_destacado.head(20))
 
         #Generar el gráfico
         fig = go.Figure()
@@ -553,20 +662,62 @@ def generar_grafico(request):
             "nivel_embalse": "Nivel Embalse [msnm]",
             "nivel_piezometrico": "Nivel Piezométrico [msnm]",
             "nivel_freatico": "Nivel Freático [msnm]",
-            "caudal": "Caudal [l/s - m³/s]"
+            "caudal": "Caudal [l/s - m³/s]",
+            "precipitacion": "Precipitación [mm]"
         }
 
-        eje_x_valores = df_final["fecha"] if eje_x == "fecha" else df_final["valor_x"]
+        if eje_x == "fecha":
+            eje_x_valores = df_final["fecha"]
+            eje_x_valores_destacado = df_destacado["fecha"]
+        else:
+            columnas_x = [col for col in df_final.columns if col != "fecha"]
+            if columnas_x:
+                eje_x_valores = df_final[columnas_x[0]]
+                eje_x_valores_destacado = df_destacado[columnas_x[0]]
 
-        if "valor_y" in df_final.columns and eje_y == "nivel_embalse":
-            fig.add_trace(
-                get_trace(
-                    tipo_grafico,
-                    df_final["fecha"],
-                    df_final["valor_y"],
-                    "Nivel Embalse"
+
+        if "valor_y" in df_final.columns:
+            if eje_y == "nivel_embalse":
+                fig.add_trace(
+                    get_trace(
+                        tipo_grafico,
+                        df_final["fecha"],
+                        df_final["valor_y"],
+                        "Nivel Embalse",
+                        color=color_normal
+                    )
                 )
-            )
+                if not df_destacado.empty:
+                    fig.add_trace(
+                        get_trace(
+                            tipo_grafico,
+                            df_destacado["fecha"],
+                            df_destacado["valor_y"],
+                            "Nivel Embalse" + "<br>" + periodo,
+                            color=color_destacado
+                        )
+                    )
+
+            elif eje_y == "precipitacion":
+                fig.add_trace(
+                    get_trace(
+                        tipo_grafico,
+                        df_final["fecha"],
+                        df_final["valor_y"],
+                        "Precipitación (mm)",
+                        color=color_normal
+                    )
+                )
+                if not df_destacado.empty:
+                    fig.add_trace(
+                        get_trace(
+                            tipo_grafico,
+                            df_destacado["fecha"],
+                            df_destacado["valor_y"],
+                            "Precipitación (mm) " + "<br>" + periodo,
+                            color=color_destacado
+                        )
+                    )
 
         #Agregar trazas para cada instrumento del eje Y
         for instrumento in instrumentos_y:
@@ -576,23 +727,56 @@ def generar_grafico(request):
                         tipo_grafico,
                         eje_x_valores,
                         df_final[instrumento.nombre],
-                        instrumento.nombre
+                        instrumento.nombre,
+                        color=color_normal
+                    )
+                )
+            if not df_destacado.empty:
+                fig.add_trace(
+                    get_trace(
+                        tipo_grafico,
+                        eje_x_valores_destacado,
+                        df_destacado[instrumento.nombre],
+                        instrumento.nombre + "<br>" + periodo,
+                        color=color_destacado
                     )
                 )
 
-        # Agregar trazas para cada instrumento del eje Y secundario
         if df_y2 is not None:
-            for instrumento in instrumentos_y2:
-                if instrumento.nombre in df_final.columns:
-                    fig.add_trace(
-                        get_trace(
-                            tipo_grafico_y2,
-                            eje_x_valores,
-                            df_final[instrumento.nombre],
-                            instrumento.nombre,
-                                  "y2"
-                        )
+            if eje_y_secundario == "precipitacion" and "valor_y2" in df_final.columns:
+                fig.add_trace(
+                    get_trace(
+                        tipo_grafico_y2,
+                        df_final["fecha"],
+                        df_final["valor_y2"],
+                        "Precipitación (mm)",
+                        "y2",
+                        color=color_secundario
                     )
+                )
+            elif eje_y_secundario == "nivel_embalse" and "valor_y2" in df_final.columns:
+                fig.add_trace(
+                    get_trace(
+                        tipo_grafico_y2,
+                        df_final["fecha"],
+                        df_final["valor_y2"],
+                        "Nivel de embalse (mm)",
+                        "y2",
+                        color=color_secundario
+                    )
+                )
+            else:
+                for instrumento in instrumentos_y2:
+                    if instrumento.nombre in df_final.columns:
+                        fig.add_trace(
+                            get_trace(
+                                tipo_grafico_y2,
+                                eje_x_valores,
+                                df_final[instrumento.nombre],
+                                instrumento.nombre,
+                                "y2"
+                            )
+                        )
 
             fig.update_layout(
                 yaxis2=dict(
@@ -603,7 +787,7 @@ def generar_grafico(request):
             )
 
         fig.update_layout(
-            title="Gráfico",
+            title=f"{nombres_ejes[eje_x]} - {nombres_ejes[eje_y]}",
             xaxis_title=nombres_ejes[eje_x],
             yaxis_title=nombres_ejes[eje_y]
         )
@@ -613,10 +797,11 @@ def generar_grafico(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-def get_trace(tipo_grafico, x_values, y_values, eje_nombre, yaxis=None):
+def get_trace(tipo_grafico, x_values, y_values, eje_nombre, yaxis=None, color="blue"):
+    y_values = pd.to_numeric(y_values, errors='coerce')
     if tipo_grafico == "bar":
-        return go.Bar(x=x_values, y=y_values, name=eje_nombre, yaxis=yaxis)
+        return go.Bar(x=x_values, y=y_values, name=eje_nombre, marker=dict(color=color), yaxis=yaxis)
     elif tipo_grafico == "scatter":
-        return go.Scatter(x=x_values, y=y_values, mode="markers", name=eje_nombre, yaxis=yaxis)
+        return go.Scatter(x=x_values, y=y_values, mode="markers", name=eje_nombre, yaxis=yaxis, line=dict(color=color))
     else:
-        return go.Scatter(x=x_values, y=y_values, mode="lines+markers",connectgaps=True, name=eje_nombre, yaxis=yaxis)
+        return go.Scatter(x=x_values, y=y_values, mode="lines+markers",connectgaps=True, name=eje_nombre, yaxis=yaxis, line=dict(color=color))

@@ -37,6 +37,17 @@
         </div>
         <br>
 
+        <div class="form-group">
+            <label>Resaltar período</label><br>
+            <label for="fecha_inicio">Desde:</label>
+            <input type="date" id="fecha_inicio" name="fecha_inicio" class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label for="fecha_fin">Hasta:</label>
+            <input type="date" id="fecha_fin" name="fecha_fin" class="form-control">
+        </div>
+
         <div class="form-check">
             {{ personalizados_form.agregar_eje_y_secundario }}
             <label class="form-check-label">
@@ -114,6 +125,15 @@ document.addEventListener("DOMContentLoaded", function() {
     function actualizarInstrumentos(select, container) {
         const valor = select.value;
         const selectElem = container.querySelector("select");
+
+        // Si es precipitacion, oculta el selector de instrumentos
+        if (valor === "precipitacion") {
+            container.style.display = "none";
+            $(selectElem).val(null).trigger('change');
+            return;
+        }
+
+        // Si es otro parámetro que sí tiene instrumentos, muestra el selector
         if (instrumentos[valor]) {
             container.style.display = "block";
             selectElem.innerHTML = ''; // Limpiar opciones anteriores

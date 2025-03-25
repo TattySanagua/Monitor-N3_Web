@@ -12,19 +12,24 @@
                         <a class="nav-link dropdown-toggle" href="#" id="navbarInicio" role="button" data-bs-toggle="dropdown">Inicio</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'index' %}">Principal</a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'generalidades' %}">Generalidades</a></li>
-                            <li><a class="dropdown-item" href="{% url 'descripcion' %}">Descripción de la Obra</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'descripcion' %}">Ficha Técnica</a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'dispositivos' %}">Dispositivos de Control</a></li>
                         </ul>
                     </li>
 
                     <!-- Embalse -->
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarEmbalse" role="button" data-bs-toggle="dropdown">Embalse</a>
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarEmbalse" role="button" data-bs-toggle="dropdown">Clima</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'embalse_form' %}">Nivel de Embalse</a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'precipitacion_form' %}">Precipitación</a></li>
-                            <li><a class="dropdown-item" href="{% url 'embalse_precipitacion_tabla' %}">Tabla</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'embalse_precipitacion_tabla' %}">Tabla de Nivel de Embalse - Precipitación</a></li>
                         </ul>
                     </li>
 
@@ -34,34 +39,38 @@
                             Instrumentos
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'crear' %}">Agregar Nuevo</a></li>
+                            <li><a class="dropdown-item" href="{% url 'crear' %}">Nuevo Instrumento</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'instrumento_tabla' %}">Tabla</a></li>
+                            <li><a class="dropdown-item" href="{% url 'instrumento_tabla' %}">Tabla de Instrumentos</a></li>
                             <li><hr class="dropdown-divider"></li>
 
                             <li class="dropdown-submenu position-relative">
                                 <a class="dropdown-item dropdown-toggle" href="#">Piezómetro</a>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" href="{% url 'piezometro_calcular' %}">Medición</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'piezometro_tabla' %}">Tabla</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'piezometro_tabla' %}">Tabla de Niveles Piezométricos</a></li>
                                 </ul>
                             </li>
-
+                            <li><hr class="dropdown-divider"></li>
                             <!-- Aforador -->
                             <li class="dropdown-submenu position-relative">
                                 <a class="dropdown-item dropdown-toggle" href="#">Aforador</a>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" href="{% url 'afovolumetrico_calcular' %}">Medición Volumétrico</a></li>
+                                    <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item" href="{% url 'afoparshall_calcular' %}">Medición Parshall</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'aforador_tabla' %}">Tabla</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'aforador_tabla' %}">Tabla de Caudales</a></li>
                                 </ul>
                             </li>
-
+                            <li><hr class="dropdown-divider"></li>
                             <li class="dropdown-submenu position-relative">
                                 <a class="dropdown-item dropdown-toggle" href="#">Freatímetro</a>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" href="{% url 'freatimetro_calcular' %}">Medición</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'freatimetro_tabla' %}">Tabla</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{% url 'freatimetro_tabla' %}">Tabla de Niveles Freáticos</a></li>
                                 </ul>
                             </li>
                         </ul>
@@ -72,6 +81,7 @@
                         <a class="nav-link dropdown-toggle" href="#" id="navbarGraficos" role="button" data-bs-toggle="dropdown">Gráficos</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'predefinidos' %}">Predefinidos</a></li>
+                            <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'personalizados' %}">Personalizados</a></li>
                         </ul>
                     </li>
@@ -81,8 +91,8 @@
                         <a class="nav-link dropdown-toggle" href="#" id="navbarEstadisticas" role="button" data-bs-toggle="dropdown">Estadísticas</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'resumen' %}">Resumen Estadístico</a></li>
-                            <li><a class="dropdown-item" href="#">Correlaciones</a></li>
-                            <li><a class="dropdown-item" href="#">Predicciones y modelos ARMA</a></li>
+<!--                            <li><a class="dropdown-item" href="{% url 'correlaciones' %}">Correlaciones</a></li>-->
+<!--                            <li><a class="dropdown-item" href="{% url 'predicciones' %}">Predicciones y modelos ARMA</a></li>-->
                         </ul>
                     </li>
                 </ul>

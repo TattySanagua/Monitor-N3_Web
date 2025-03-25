@@ -44,30 +44,32 @@
         {% if parametro_seleccionado == "nivel_piezometrico" or parametro_seleccionado == "caudal" or parametro_seleccionado == "nivel_freatico" %}
             {% for instrumento, estadistica in estadisticas.items %}
                 <h4>{{ instrumento }}</h4>
-                <table class="table table-bordered">
-                    <tr><th>Media</th><td>{{ estadistica.media }}</td></tr>
-                    <tr><th>Mediana</th><td>{{ estadistica.mediana }}</td></tr>
-                    <tr><th>Moda</th><td>{{ estadistica.moda }}</td></tr>
-                    <tr><th>Máximo</th><td>{{ estadistica.maximo }}</td></tr>
-                    <tr><th>Mínimo</th><td>{{ estadistica.minimo }}</td></tr>
-                    <tr><th>Desviación Estándar</th><td>{{ estadistica.desviacion_estandar }}</td></tr>
-                    <tr><th>Datos Faltantes</th><td>{{ estadistica.datos_faltantes }}</td></tr>
-                    <tr><th>Datos Fuera de Rango</th><td>{{ estadistica.fuera_de_rango }}</td></tr>
-                </table>
+                <div class="table-responsive mi-tabla">
+                    <table class="table table-bordered table-striped text-center table-hover mi-tabla-tabla" style="vertical-align: middle;">
+                        <tr><th>Media</th><td>{{ estadistica.media }}</td></tr>
+                        <tr><th>Mediana</th><td>{{ estadistica.mediana }}</td></tr>
+                        <tr><th>Moda</th><td>{{ estadistica.moda }}</td></tr>
+                        <tr><th>Máximo</th><td>{{ estadistica.maximo }}</td></tr>
+                        <tr><th>Mínimo</th><td>{{ estadistica.minimo }}</td></tr>
+                        <tr><th>Desviación Estándar</th><td>{{ estadistica.desviacion_estandar }}</td></tr>
+                        <tr><th>Datos Faltantes</th><td>{{ estadistica.datos_faltantes }}</td></tr>
+                    </table>
+                </div>
                 <br>
             {% endfor %}
         {% else %}
 
-        <table class="table table-bordered">
-            <tr><th>Media</th><td>{{ estadisticas.media }}</td></tr>
-            <tr><th>Mediana</th><td>{{ estadisticas.mediana }}</td></tr>
-            <tr><th>Moda</th><td>{{ estadisticas.moda }}</td></tr>
-            <tr><th>Máximo</th><td>{{ estadisticas.maximo }}</td></tr>
-            <tr><th>Mínimo</th><td>{{ estadisticas.minimo }}</td></tr>
-            <tr><th>Desviación Estándar</th><td>{{ estadisticas.desviacion_estandar }}</td></tr>
-            <tr><th>Datos Faltantes</th><td>{{ estadisticas.datos_faltantes }}</td></tr>
-            <tr><th>Datos Fuera de Rango</th><td>{{ estadisticas.fuera_de_rango }}</td></tr>
-        </table>
+        <div class="table-responsive mi-tabla">
+            <table class="table table-bordered table-striped text-center table-hover mi-tabla-tabla" style="vertical-align: middle;">
+                <tr><th>Media</th><td>{{ estadisticas.media }}</td></tr>
+                <tr><th>Mediana</th><td>{{ estadisticas.mediana }}</td></tr>
+                <tr><th>Moda</th><td>{{ estadisticas.moda }}</td></tr>
+                <tr><th>Máximo</th><td>{{ estadisticas.maximo }}</td></tr>
+                <tr><th>Mínimo</th><td>{{ estadisticas.minimo }}</td></tr>
+                <tr><th>Desviación Estándar</th><td>{{ estadisticas.desviacion_estandar }}</td></tr>
+                <tr><th>Datos Faltantes</th><td>{{ estadisticas.datos_faltantes }}</td></tr>
+            </table>
+        </div>
         {% endif %}
     </div>
 
