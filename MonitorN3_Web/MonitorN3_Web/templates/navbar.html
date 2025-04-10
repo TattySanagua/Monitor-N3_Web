@@ -1,6 +1,9 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'index' %}">Monitor N3</a>
+            {% load static %}
+            <a class="navbar-brand" href="{% url 'index' %}" style="display: flex; align-items: center;"><img src="{% static 'img/logo_orsep.jpg' %}" alt="Logo" height="70" class="d-inline-block align-top logo-redondeado">
+             &nbsp;&nbsp;Monitor N3
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -25,10 +28,12 @@
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarEmbalse" role="button" data-bs-toggle="dropdown">Clima</a>
                         <ul class="dropdown-menu">
+                            {% if request.user.groups.all.0.name != "Invitado" %}
                             <li><a class="dropdown-item" href="{% url 'embalse_form' %}">Nivel de Embalse</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'precipitacion_form' %}">Precipitación</a></li>
                             <li><hr class="dropdown-divider"></li>
+                            {% endif %}
                             <li><a class="dropdown-item" href="{% url 'embalse_precipitacion_tabla' %}">Tabla de Nivel de Embalse - Precipitación</a></li>
                         </ul>
                     </li>
@@ -39,28 +44,36 @@
                             Instrumentos
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'crear' %}">Nuevo Instrumento</a></li>
-                            <li><hr class="dropdown-divider"></li>
+                            {% if request.user.groups.all.0.name != "Invitado" and request.user.groups.all.0.name != "Técnico" %}
+                                <li><a class="dropdown-item" href="{% url 'crear' %}">Nuevo Instrumento</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                            {% endif %}
                             <li><a class="dropdown-item" href="{% url 'instrumento_tabla' %}">Tabla de Instrumentos</a></li>
                             <li><hr class="dropdown-divider"></li>
+
 
                             <li class="dropdown-submenu position-relative">
                                 <a class="dropdown-item dropdown-toggle" href="#">Piezómetro</a>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="{% url 'piezometro_calcular' %}">Medición</a></li>
-                                    <li><hr class="dropdown-divider"></li>
+                                    {% if request.user.groups.all.0.name != "Invitado" %}
+                                        <li><a class="dropdown-item" href="{% url 'piezometro_calcular' %}">Medición</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    {% endif %}
                                     <li><a class="dropdown-item" href="{% url 'piezometro_tabla' %}">Tabla de Niveles Piezométricos</a></li>
                                 </ul>
                             </li>
+
                             <li><hr class="dropdown-divider"></li>
                             <!-- Aforador -->
                             <li class="dropdown-submenu position-relative">
                                 <a class="dropdown-item dropdown-toggle" href="#">Aforador</a>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="{% url 'afovolumetrico_calcular' %}">Medición Volumétrico</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="{% url 'afoparshall_calcular' %}">Medición Parshall</a></li>
-                                    <li><hr class="dropdown-divider"></li>
+                                    {% if request.user.groups.all.0.name != "Invitado" %}
+                                        <li><a class="dropdown-item" href="{% url 'afovolumetrico_calcular' %}">Medición Volumétrico</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item" href="{% url 'afoparshall_calcular' %}">Medición Parshall</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    {% endif %}
                                     <li><a class="dropdown-item" href="{% url 'aforador_tabla' %}">Tabla de Caudales</a></li>
                                 </ul>
                             </li>
@@ -68,8 +81,10 @@
                             <li class="dropdown-submenu position-relative">
                                 <a class="dropdown-item dropdown-toggle" href="#">Freatímetro</a>
                                 <ul class="dropdown-menu dropdown-menu-end">
+                                    {% if request.user.groups.all.0.name != "Invitado" %}
                                     <li><a class="dropdown-item" href="{% url 'freatimetro_calcular' %}">Medición</a></li>
                                     <li><hr class="dropdown-divider"></li>
+                                    {% endif %}
                                     <li><a class="dropdown-item" href="{% url 'freatimetro_tabla' %}">Tabla de Niveles Freáticos</a></li>
                                 </ul>
                             </li>
@@ -91,11 +106,18 @@
                         <a class="nav-link dropdown-toggle" href="#" id="navbarEstadisticas" role="button" data-bs-toggle="dropdown">Estadísticas</a>
                         <ul class="dropdown-menu">
                             <li><a class="dropdown-item" href="{% url 'resumen' %}">Resumen Estadístico</a></li>
-<!--                            <li><a class="dropdown-item" href="{% url 'correlaciones' %}">Correlaciones</a></li>-->
-<!--                            <li><a class="dropdown-item" href="{% url 'predicciones' %}">Predicciones y modelos ARMA</a></li>-->
+                            <li><a class="dropdown-item" href="{% url 'predicciones' %}">Auscultación estadística</a></li>
                         </ul>
                     </li>
                 </ul>
+
+                {% if user.is_authenticated %}
+                    <p><b><i class="fas fa-user"></i> {{ user.username }} &nbsp;&nbsp;&nbsp;</b></p>
+                        <p><a href="{% url 'logout' %}" class="btn btn-danger btn-sm"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                    </p>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-primary btn-sm">Iniciar sesión</a>
+                {% endif %}
             </div>
         </div>
     </nav>

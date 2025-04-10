@@ -26,7 +26,7 @@
             <tr>
                 <th>Fecha</th>
                 <th>Nivel Embalse</th>
-                <th colspan="{{ nombres_aforadores|length }}">Instrumento - Caudal [m³/s - l/s]</th>
+                <th colspan="{{ nombres_aforadores|length }}">Instrumento - Caudal [l/s]</th>
             </tr>
             <tr>
                 <th>dd-mm-YYYY</th>
@@ -38,23 +38,30 @@
             </thead>
 
             <tbody>
-            {% for fecha in fechas %}
+            {% for fila in filas_tabla %}
             <tr>
-                <td>{{ fecha }}</td>
-                <td>{{ datos_tabla|key:fecha|key:"nivel_embalse"|default:"-" }}</td>
-                {% for nombre in nombres_aforadores %}
-                    {% with valor=datos_tabla|key:fecha|key:nombre %}
-                        <td>
-                            {% if valor is not None and valor != "" and valor != "None" %}{{ valor }}{% else %}-{% endif %}
-                        </td>
-                    {% endwith %}
+                <td>{{ fila.fecha }}</td>
+                <td>{{ fila.nivel_embalse }}</td>
+                {% for valor in fila.valores %}
+                    <td>
+                        {% if valor != "-" %}
+                            {{ valor.valor }}
+                            {% if request.user.groups.all.0.name != "Invitado" and request.user.groups.all.0.name != "Técnico" %}
+                                <a href="{% url 'editar_medicion' id=valor.id %}" class="ms-1 text-muted" style="font-size:0.65rem;">
+                                    <i class="fas fa-pen" style="color:#bcbcbc;"></i>
+                                </a>
+                            {% endif %}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
                 {% endfor %}
             </tr>
-            {% empty %}
+        {% empty %}
             <tr>
                 <td colspan="{{ nombres_aforadores|length|add:2 }}" class="text-center">No hay mediciones registradas.</td>
             </tr>
-            {% endfor %}
+        {% endfor %}
             </tbody>
         </table>
     </div>

@@ -7,12 +7,13 @@
     <br>
 
     <!-- Filtro -->
-    <form method="GET" id="filtro-form" class="row g-3 mb-3 justify-content-center">
-        <div class="col-md-3">
+    <div class="filtro" style="margin-bottom: 20px; max-width: 800px;">
+        <form method="GET" id="filtro-form" class="d-flex justify-content-center align-items-center flex-wrap">
+        <div class="col-md-auto m-2">
             <label for="nombre" class="form-label">Nombre del Instrumento</label>
             <input type="text" class="form-control" id="nombre" name="nombre" value="{{ nombre_filtro }}">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-auto m-2">
             <label for="tipo" class="form-label">Tipo de Instrumento</label>
             <select class="form-control" id="tipo" name="tipo">
                 <option value="">Todos</option>
@@ -21,33 +22,43 @@
                 {% endfor %}
             </select>
         </div>
-        <div class="col-md-3 align-self-end">
-            <div style="text-align: center; ">
-                <button class="boton"><i class="fas fa-filter"></i> Filtrar</button>
-                    <a href="{% url 'instrumento_tabla' %}" class="btn btn-secondary"><i class="fas fa-times"></i> Limpiar</a>
-                <style>
-                    .boton {
-                        background-color: #004c95;
-                        color: white;
-                        border: none;
-                        padding: 10px 20px;
-                        border-radius: 20px;
-                        cursor: pointer;
-                        transition: background-color 0.3s ease;
-                    }
-
-                    .boton:hover {
-                        background-color: #0057AAFF;
-                        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-                    }
-                    .btn-secondary{
-                        padding: 10px 20px;
-                        border-radius: 20px;
-                    }
-                </style>
-            </div>
+        <div class="col-md-auto m-2">
+            <button class="boton"><i class="fas fa-filter"></i> Filtrar</button>
+        </div>
+            <div class="col-md-auto m-2">
+                <a href="{% url 'instrumento_tabla' %}" class="btn btn-secondary"><i class="fas fa-times"></i> Limpiar</a>
         </div>
     </form>
+    <style>
+        .filtro{
+            color:black;
+            background: rgba(255, 255, 255, 0.70);
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            margin: auto;
+            border-radius: 8px;
+            }
+
+        .boton {
+            background-color: #004c95;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            ransition: background-color 0.3s ease;
+        }
+
+        .boton:hover {
+            background-color: #0057AAFF;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-secondary{
+            padding: 10px 20px;
+            border-radius: 20px;
+        }
+    </style>
+    </div>
 
     <!-- Exportación -->
     <div class="mb-3 d-flex justify-content-end">
@@ -70,50 +81,54 @@
                     <th>Fecha de Baja</th>
                     <th>Activo</th>
                     <th>Parámetros</th>
-                    <th>Modificar</th>
-                    <th>Eliminar</th>
+                    {% if request.user.groups.all.0.name != "Invitado" and request.user.groups.all.0.name != "Técnico" %}
+                        <th>Modificar</th>
+                        <th>Eliminar</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
                 {% for instrumento in instrumentos %}
-                <tr>
-                    <td>{{ instrumento.nombre }}</td>
-                    <td>{{ instrumento.id_tipo.nombre_tipo }}</td>
-                    <td>{{ instrumento.fecha_alta|date:"d/m/Y" |default:"-"}}</td>
-                    <td>{{ instrumento.fecha_baja|date:"d/m/Y" |default:"-"}}</td>
-                    <td>
-                        {% if instrumento.activo %}
-                            <span class="badge bg-success">Sí</span>
-                        {% else %}
-                            <span class="badge bg-danger">No</span>
+                    <tr>
+                        <td>{{ instrumento.nombre }}</td>
+                        <td>{{ instrumento.id_tipo.nombre_tipo }}</td>
+                        <td>{{ instrumento.fecha_alta|date:"d/m/Y" |default:"-"}}</td>
+                        <td>{{ instrumento.fecha_baja|date:"d/m/Y" |default:"-"}}</td>
+                        <td>
+                            {% if instrumento.activo %}
+                                <span class="badge bg-success">Sí</span>
+                            {% else %}
+                                <span class="badge bg-danger">No</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align:left;">
+                            {% for parametro in instrumento.parametro_set.all %}
+                                <strong>{{ parametro.nombre_parametro }}:</strong> {{ parametro.valor|floatformat:2 }}<br>
+                            {% empty %}
+                                <em>-</em>
+                            {% endfor %}
+                        </td>
+                        {% if request.user.groups.all.0.name != "Invitado" and request.user.groups.all.0.name != "Técnico" %}
+                            <td>
+                                {% if instrumento.activo %}
+                                    <a href="{% url 'instrumento_modificar' instrumento.id %}" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                    </a>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if instrumento.activo %}
+                                    <button class="btn btn-danger btn-sm" style="width: 40px;" onclick="darDeBaja({{ instrumento.id }})">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                {% endif %}
+                            </td>
                         {% endif %}
-                    </td>
-                    <td style="text-align:left;">
-                        {% for parametro in instrumento.parametro_set.all %}
-                            <strong>{{ parametro.nombre_parametro }}:</strong> {{ parametro.valor|floatformat:2 }}<br>
-                        {% empty %}
-                            <em>-</em>
-                        {% endfor %}
-                    </td>
-                    <td>
-                        {% if instrumento.activo %}
-                            <a href="{% url 'instrumento_modificar' instrumento.id %}" class="btn btn-warning btn-sm">
-                            <i class="fas fa-edit"></i>
-                            </a>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if instrumento.activo %}
-                            <button class="btn btn-danger btn-sm" style="width: 40px;" onclick="darDeBaja({{ instrumento.id }})">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        {% endif %}
-                    </td>
-                </tr>
+                    </tr>
                 {% empty %}
-                <tr>
-                    <td colspan="6" class="text-center">No hay instrumentos registrados.</td>
-                </tr>
+                    <tr>
+                        <td colspan="6" class="text-center">No hay instrumentos registrados.</td>
+                    </tr>
                 {% endfor %}
             </tbody>
         </table>

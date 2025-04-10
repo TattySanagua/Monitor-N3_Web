@@ -10,11 +10,14 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from . forms.embalse_form import EmbalseForm
 from . models import Embalse
+from django.contrib.auth.decorators import login_required
 from ..precipitacion.models import Precipitacion
 
+@login_required(login_url='/login/')
 def embalse_form(request):
     embalse_form = EmbalseForm()
     return render(request, 'embalse_form.html',  {'embalse_form': embalse_form})
+
 
 def obtener_datos_embalse():
     embalses = pd.DataFrame.from_records(Embalse.objects.values("fecha", "nivel_embalse"))
@@ -30,6 +33,7 @@ def obtener_datos_embalse():
 
     return df_final
 
+@login_required(login_url='/login/')
 def nivelembalse(request):
     if request.method == "POST":
         embalse_form = EmbalseForm(request.POST)
@@ -43,6 +47,7 @@ def nivelembalse(request):
     embalse_form = EmbalseForm()
     return render(request, "embalse_form.html", {"embalse_form": embalse_form})
 
+@login_required(login_url='/login/')
 def embalse_precipitacion_tabla(request):
     fecha_inicio = request.GET.get('fecha_inicio')
     fecha_fin = request.GET.get('fecha_fin')
@@ -79,6 +84,7 @@ def embalse_precipitacion_tabla(request):
 
     return render(request, "embalse_precipitacion_tabla.html", contexto)
 
+@login_required(login_url='/login/')
 def export_embalse_excel(request):
     df = obtener_datos_embalse()
 
@@ -91,6 +97,7 @@ def export_embalse_excel(request):
 
     return response
 
+@login_required(login_url='/login/')
 def export_embalse_pdf(request):
     df = obtener_datos_embalse()
 

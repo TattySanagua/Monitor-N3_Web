@@ -14,8 +14,9 @@ SECRET_KEY = 'django-insecure-h5pva^)8$^kr+p0ge2jelo6^du^&^8=yaowhqjxuo=am-dk4yh
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.ngrok-free.app', '127.0.0.1', 'localhost']
 
+CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.app']
 
 # Application definition
 
@@ -119,7 +120,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'MonitorN3_Web', 'static')  # Ruta correcta a la carpeta static
+    os.path.join(BASE_DIR, 'MonitorN3_Web', 'static')
 ]
 STATICFILES_FINDERS = [
     'django.contrib.staticfiles.finders.FileSystemFinder',
@@ -128,7 +129,7 @@ STATICFILES_FINDERS = [
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # STATICFILES_DIRS = [
-#     os.path.join(BASE_DIR, 'nombre_de_tu_app', 'static'),  # Reemplaza 'nombre_de_tu_app'
+#     os.path.join(BASE_DIR, 'nombre_de_tu_app', 'static'),
 # ]
 if DEBUG:
     import mimetypes

@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Editar Medición{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center">Editar Magnitud - {{ instrumento }}</h2>
+    <br>
+
+    <div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1050">
+        <div id="toast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toast-message"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-container" style="color:black; background: rgba(255, 255, 255, 0.70);box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
+
+            <form method="POST">
+                {% csrf_token %}
+                {{ form.as_p }}
+                        <div style="text-align: center; ">
+                <button type="submit" class="boton">Guardar</button>
+                <style>
+                        .boton {
+                            background-color: #004080;
+                            color: white;
+                            border: none;
+                            padding: 10px 20px;
+                            border-radius: 20px;
+                            cursor: pointer;
+                            transition: background-color 0.3s ease;
+                        }
+
+                        .boton:hover {
+                            background-color: #0057AAFF;
+                            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+                        }
+                    </style>
+                </div>
+        <br>
+        <div style="text-align: center; ">
+            <button type="button" class="boton1" id="cancelar-btn" onclick="window.history.back();">Cancelar</button>
+                <style>
+                    .boton1 {
+                        background-color: #97060a;
+                        color: white;
+                        border: none;
+                        padding: 10px 20px;
+                        border-radius: 20px;
+                        cursor: pointer;
+                        transition: background-color 0.3s ease;
+                    }
+
+                    .boton1:hover {
+                        background-color: #b5080e;
+                        box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+                    }
+                </style>
+        </div>
+            </form>
+
+    </div>
+</div>
+<script>
+document.querySelector("form").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+
+    fetch("", {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": formData.get("csrfmiddlewaretoken"),
+        },
+        body: formData,
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            mostrarToast(data.message);
+            setTimeout(() => {
+                window.location.href = data.redirect_url;
+            }, 0);
+        } else {
+            mostrarToast("❌ Error al guardar", true);
+        }
+    })
+    .catch(() => {
+        mostrarToast("❌ Error al guardar", true);
+    });
+});
+
+function mostrarToast(mensaje, error = false) {
+    const toastEl = document.getElementById("toast");
+    const toastMsg = document.getElementById("toast-message");
+
+    toastMsg.textContent = mensaje;
+    toastEl.classList.remove("bg-success", "bg-danger");
+    toastEl.classList.add(error ? "bg-danger" : "bg-success");
+
+    const toast = new bootstrap.Toast(toastEl);
+    toast.show();
+}
+</script>
+{% endblock %}

@@ -1,5 +1,6 @@
 from decimal import Decimal
 from django.forms import modelformset_factory
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.shortcuts import get_object_or_404
 from .models import Parametro, Tipo, Instrumento
 from . forms.instrumento_form import InstrumentoForm, InstrumentoUpdateForm, ParametroForm
@@ -13,6 +14,11 @@ from reportlab.lib import colors
 from django.shortcuts import render
 from django.http import HttpResponse
 
+def user_is_admin(user):
+    return user.is_authenticated and not user.groups.filter(name__in=["Invitado", "Técnico"]).exists()
+
+@login_required(login_url='/login/')
+@user_passes_test(user_is_admin, login_url='/login/')
 def crear_instrumento(request):
     if request.method == 'POST':
         instrumento_form = InstrumentoForm(request.POST)
@@ -59,6 +65,7 @@ def crear_instrumento(request):
     instrumento_form = InstrumentoForm()
     return render(request, "instrumento_form.html", {"instrumento_form": instrumento_form})
 
+@login_required(login_url='/login/')
 def instrumento_tabla(request):
     nombre_filtro = request.GET.get('nombre', '')
     tipo_filtro = request.GET.get('tipo', '')
@@ -81,6 +88,8 @@ def instrumento_tabla(request):
     }
     return render(request, 'instrumento_tabla.html', contexto)
 
+@login_required(login_url='/login/')
+@user_passes_test(user_is_admin, login_url='/login/')
 def baja_instrumento(request, instrumento_id):
     if request.method == "POST":
         instrumento = get_object_or_404(Instrumento, id=instrumento_id)
@@ -92,6 +101,8 @@ def baja_instrumento(request, instrumento_id):
 
     return JsonResponse({"success": False, "message": "❌ Error: Solicitud no válida."}, status=400)
 
+@login_required(login_url='/login/')
+@user_passes_test(user_is_admin, login_url='/login/')
 def instrumento_modificar(request, instrumento_id):
 
     instrumento = get_object_or_404(Instrumento, id=instrumento_id)
@@ -120,7 +131,7 @@ def instrumento_modificar(request, instrumento_id):
         'instrumento': instrumento
     })
 
-
+@login_required(login_url='/login/')
 def export_instrumentos_excel(request):
     instrumentos = Instrumento.objects.prefetch_related("parametro_set").all()
 
@@ -151,6 +162,7 @@ def export_instrumentos_excel(request):
     wb.save(response)
     return response
 
+@login_required(login_url='/login/')
 def export_instrumentos_pdf(request):
     instrumentos = Instrumento.objects.prefetch_related("parametro_set").all()
 

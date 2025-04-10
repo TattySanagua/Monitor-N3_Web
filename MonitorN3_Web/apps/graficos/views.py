@@ -1,6 +1,7 @@
 import json
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 import plotly.graph_objects as go
 import pandas as pd
 from .forms.personalizados_form import PersonalizadoForm
@@ -24,9 +25,11 @@ GRAFICOS_PREDEFINIDOS = {
     "fecha_nivel_embalse_caudal_afo3_pp": "Cronológico - Nivel Embalse - Caudal (AFo3-PP)",
 }
 
+@login_required(login_url='/login/')
 def predefinidos(request):
     return render(request, "predefinidos.html", {"graficos": GRAFICOS_PREDEFINIDOS})
 
+@login_required(login_url='/login/')
 def generar_grafico_predefinido(request):
     graficos = GRAFICOS_PREDEFINIDOS
     grafico_html = None
@@ -39,6 +42,7 @@ def generar_grafico_predefinido(request):
             df = pd.DataFrame(list(datos))
             df["fecha"] = pd.to_datetime(df["fecha"])
             df = df.sort_values("fecha")
+            fecha_max = df["fecha"].max()
 
             fig = go.Figure()
             fig.add_trace(
@@ -53,7 +57,21 @@ def generar_grafico_predefinido(request):
             fig.update_layout(
                 title="Fecha - Nivel Embalse",
                 xaxis_title="Fecha",
-                yaxis_title="Nivel Embalse (msnm)"
+                yaxis_title="Nivel Embalse (msnm)",
+                height=700,
+                xaxis=dict(
+                    rangeselector=dict(
+                        buttons=list([
+                            dict(count=2, label="Último año", step="year", stepmode="backward"),
+                            dict(count=3, label="Últimos 3 años", step="year", stepmode="backward"),
+                            dict(step="all", label="Todos")
+                        ])
+                    ),
+                    rangeslider=dict(visible=True),
+                    type="date",
+                    range=[fecha_max - pd.DateOffset(years=3), fecha_max],
+                    tickformat="%d-%m-%Y"
+                )
             )
 
         elif seleccion == "fecha_nivel_piezometrico_pc1_7":
@@ -63,6 +81,7 @@ def generar_grafico_predefinido(request):
 
             df["fecha"] = pd.to_datetime(df["fecha"])
             df = df.sort_values("fecha")
+            fecha_max = df["fecha"].max()
 
             fig = go.Figure()
             for piezometro in piezometros:
@@ -79,7 +98,21 @@ def generar_grafico_predefinido(request):
             fig.update_layout(
                 title="Fecha - Nivel Piezométrico (PC1-2-3-4-5-6-7)",
                 xaxis_title="Fecha",
-                yaxis_title="Nivel Piezométrico (msnm)"
+                yaxis_title="Nivel Piezométrico (msnm)",
+                height=700,
+                xaxis=dict(
+                    rangeselector=dict(
+                        buttons=list([
+                            dict(count=2, label="Último año", step="year", stepmode="backward"),
+                            dict(count=3, label="Últimos 3 años", step="year", stepmode="backward"),
+                            dict(step="all", label="Todos")
+                        ])
+                    ),
+                    rangeslider=dict(visible=True),
+                    type="date",
+                    range=[fecha_max - pd.DateOffset(years=3), fecha_max],
+                    tickformat="%d-%m-%Y"
+                )
             )
 
         elif seleccion == "fecha_nivel_piezometrico_pc1_5_6":
@@ -90,6 +123,7 @@ def generar_grafico_predefinido(request):
 
             df["fecha"] = pd.to_datetime(df["fecha"])
             df = df.sort_values("fecha")
+            fecha_max = df["fecha"].max()
 
             fig = go.Figure()
             for piezometro in piezometros:
@@ -105,7 +139,21 @@ def generar_grafico_predefinido(request):
             fig.update_layout(
                 title="Fecha - Nivel Piezométrico (PC1_5_6)",
                 xaxis_title="Fecha",
-                yaxis_title="Nivel Piezométrico (msnm)"
+                yaxis_title="Nivel Piezométrico (msnm)",
+                height=700,
+                xaxis=dict(
+                    rangeselector=dict(
+                        buttons=list([
+                            dict(count=2, label="Último año", step="year", stepmode="backward"),
+                            dict(count=3, label="Últimos 3 años", step="year", stepmode="backward"),
+                            dict(step="all", label="Todos")
+                        ])
+                    ),
+                    rangeslider=dict(visible=True),
+                    type="date",
+                    range=[fecha_max - pd.DateOffset(years=3), fecha_max],
+                    tickformat="%d-%m-%Y"
+                )
             )
 
         elif seleccion == "fecha_nivel_piezometrico_f1_pc2_3_4":
@@ -116,6 +164,7 @@ def generar_grafico_predefinido(request):
 
             df["fecha"] = pd.to_datetime(df["fecha"])
             df = df.sort_values("fecha")
+            fecha_max = df["fecha"].max()
 
             fig = go.Figure()
             for instrumento in instrumentos:
@@ -131,7 +180,21 @@ def generar_grafico_predefinido(request):
             fig.update_layout(
                 title="Fecha - Nivel Piezométrico (F1_PC2_3_4)",
                 xaxis_title="Fecha",
-                yaxis_title="Nivel Piezométrico (msnm)"
+                yaxis_title="Nivel Piezométrico (msnm)",
+                height=700,
+                xaxis=dict(
+                    rangeselector=dict(
+                        buttons=list([
+                            dict(count=2, label="Último año", step="year", stepmode="backward"),
+                            dict(count=3, label="Últimos 3 años", step="year", stepmode="backward"),
+                            dict(step="all", label="Todos")
+                        ])
+                    ),
+                    rangeslider=dict(visible=True),
+                    type="date",
+                    range=[fecha_max - pd.DateOffset(years=3), fecha_max],
+                    tickformat="%d-%m-%Y"
+                )
             )
 
         elif seleccion == "nivel_embalse_nivel_piezometrico_pc1_5_6":
@@ -148,7 +211,7 @@ def generar_grafico_predefinido(request):
             df_final = pd.merge(df_piezometro, df_embalse, on="fecha", how="inner")
 
             df_final["año"] = df_final["fecha"].dt.year
-            print(df_final)
+
             fig = go.Figure()
 
             for piezometro in piezometros:
@@ -169,7 +232,8 @@ def generar_grafico_predefinido(request):
                 title="Nivel Embalse - Nivel Piezométrico (PC1-5-6)",
                 xaxis_title="Nivel Embalse (msnm)",
                 yaxis_title="Nivel Piezométrico (msnm)",
-                legend_title="Piezómetro (Año)"
+                legend_title="Piezómetro (Año)",
+                height=700
             )
 
         elif seleccion == "nivel_embalse_nivel_piezometrico_f1_pc2_3_4":
@@ -213,15 +277,11 @@ def generar_grafico_predefinido(request):
 
             nivel_embalse_line = list(range(int(min_nivel_embalse), int(max_extendido) + 1))
 
-            # nivel_minimo = [x * 0.42 + 347.08 if x > 598.5 else None for x in nivel_embalse_line]
-            # nivel_esperado = [x * 0.24 + 454.79 if x > 598.5 else None for x in nivel_embalse_line]
-            # nivel_optimo = [x * 0.07 + 556.52 if x > 598.5 else None for x in nivel_embalse_line]
+            nivel_minimo = [x * 0.42 + 347.08 if x > 598.5 else None for x in nivel_embalse_line]
+            nivel_esperado = [x * 0.24 + 454.79 if x > 598.5 else None for x in nivel_embalse_line]
+            nivel_optimo = [x * 0.07 + 556.52 if x > 598.5 else None for x in nivel_embalse_line]
 
-            nivel_minimo = [x * 0.42 + 347.08 for x in nivel_embalse_line]
-            nivel_esperado = [x * 0.24 + 454.79 for x in nivel_embalse_line]
-            nivel_optimo = [x * 0.07 + 556.52 for x in nivel_embalse_line]
-
-            fig.add_trace(go.Scatter(x=nivel_embalse_line, y=nivel_minimo, mode='lines', name='Mínimo', line=dict(color='black', width=2.5)))
+            fig.add_trace(go.Scatter(x=nivel_embalse_line, y=nivel_minimo, mode='lines', name='Mínimo', line=dict(color='blue', width=2.5)))
             fig.add_trace(go.Scatter(x=nivel_embalse_line, y=nivel_esperado, mode='lines', name='Esperado', line=dict(color='red', width=2.5)))
             fig.add_trace(go.Scatter(x=nivel_embalse_line, y=nivel_optimo, mode='lines', name='Óptimo', line=dict(color='green', width=2.5)))
 
@@ -248,7 +308,7 @@ def generar_grafico_predefinido(request):
             df_final = pd.merge(df_freatimetro, df_embalse, on="fecha", how="inner")
 
             df_final["año"] = df_final["fecha"].dt.year
-            print(df_final)
+
             fig = go.Figure()
 
             for freatimetro in freatimetros:
@@ -269,7 +329,8 @@ def generar_grafico_predefinido(request):
                 title="Nivel Embalse - Nivel Freático (L3-F1)",
                 xaxis_title="Nivel Embalse (msnm)",
                 yaxis_title="Nivel Freático (msnm)",
-                legend_title="Freatímetro (Año)"
+                legend_title="Freatímetro (Año)",
+                height=500
             )
 
         elif seleccion == "nivel_embalse_caudal_afo3_tot":
@@ -286,7 +347,7 @@ def generar_grafico_predefinido(request):
             df_final = pd.merge(df_aforador, df_embalse, on="fecha", how="inner")
 
             df_final["año"] = df_final["fecha"].dt.year
-            print(df_final)
+
             fig = go.Figure()
 
             for aforador in aforadores:
@@ -307,7 +368,8 @@ def generar_grafico_predefinido(request):
                 title="Nivel Embalse - Caudal (AFo3-TOT)",
                 xaxis_title="Nivel Embalse (msnm)",
                 yaxis_title="Caudal (m³/s)",
-                legend_title="Aforador (Año)"
+                legend_title="Aforador (Año)",
+                height=700
             )
 
         elif seleccion == "nivel_embalse_caudal_afo3_ei":
@@ -324,7 +386,7 @@ def generar_grafico_predefinido(request):
             df_final = pd.merge(df_aforador, df_embalse, on="fecha", how="inner")
 
             df_final["año"] = df_final["fecha"].dt.year
-            print(df_final)
+
             fig = go.Figure()
 
             for aforador in aforadores:
@@ -342,10 +404,11 @@ def generar_grafico_predefinido(request):
                         )
                     )
             fig.update_layout(
-                title="Nivel Embalse - Caudal (AFo3-TOT)",
+                title="Nivel Embalse - Caudal (AFo3-EI)",
                 xaxis_title="Nivel Embalse (msnm)",
                 yaxis_title="Caudal (l/s)",
-                legend_title="Aforador (Año)"
+                legend_title="Aforador (Año)",
+                height=700
             )
 
         elif seleccion == "nivel_embalse_caudal_afo3_pp":
@@ -380,10 +443,11 @@ def generar_grafico_predefinido(request):
                         )
                     )
             fig.update_layout(
-                title="Nivel Embalse - Caudal (AFo3-TOT)",
+                title="Nivel Embalse - Caudal (AFo3-PP)",
                 xaxis_title="Nivel Embalse (msnm)",
                 yaxis_title="Caudal (l/s)",
-                legend_title="Aforador (Año)"
+                legend_title="Aforador (Año)",
+                height=700
             )
 
         elif seleccion == "fecha_nivel_embalse_caudal_afo3_tot":
@@ -398,6 +462,7 @@ def generar_grafico_predefinido(request):
 
             df_final = pd.merge(df_embalse, df_caudal, on="fecha", how="outer", suffixes=("_embalse", "_caudal"))
             df_final = df_final.sort_values("fecha")
+            fecha_max = df_final["fecha"].max()
 
             fig = go.Figure()
 
@@ -427,6 +492,20 @@ def generar_grafico_predefinido(request):
                 xaxis_title="Fecha",
                 yaxis=dict(title="Nivel Embalse (msnm)", side="left", showgrid=True),
                 yaxis2=dict(title="Caudal (m³/s)", overlaying="y", side="right", showgrid=True),
+                height=700,
+                xaxis=dict(
+                    rangeselector=dict(
+                        buttons=list([
+                            dict(count=2, label="Último año", step="year", stepmode="backward"),
+                            dict(count=3, label="Últimos 3 años", step="year", stepmode="backward"),
+                            dict(step="all", label="Todos")
+                        ])
+                    ),
+                    rangeslider=dict(visible=True),
+                    type="date",
+                    range=[fecha_max - pd.DateOffset(years=3), fecha_max],
+                    tickformat="%d-%m-%Y"
+                )
             )
 
         elif seleccion == "fecha_nivel_embalse_caudal_afo3_pp":
@@ -441,6 +520,7 @@ def generar_grafico_predefinido(request):
 
             df_final = pd.merge(df_embalse, df_caudal, on="fecha", how="outer", suffixes=("_embalse", "_caudal"))
             df_final = df_final.sort_values("fecha")
+            fecha_max = df_final["fecha"].max()
 
             fig = go.Figure()
 
@@ -470,6 +550,20 @@ def generar_grafico_predefinido(request):
                 xaxis_title="Fecha",
                 yaxis=dict(title="Nivel Embalse (msnm)", side="left", showgrid=True),
                 yaxis2=dict(title="Caudal (l/s)", overlaying="y", side="right", showgrid=True),
+                height=700,
+                xaxis=dict(
+                    rangeselector=dict(
+                        buttons=list([
+                            dict(count=2, label="Último año", step="year", stepmode="backward"),
+                            dict(count=3, label="Últimos 3 años", step="year", stepmode="backward"),
+                            dict(step="all", label="Todos")
+                        ])
+                    ),
+                    rangeslider=dict(visible=True),
+                    type="date",
+                    range=[fecha_max - pd.DateOffset(years=3), fecha_max],
+                    tickformat="%d-%m-%Y"
+                )
             )
 
         if "fig" in locals():
@@ -478,6 +572,7 @@ def generar_grafico_predefinido(request):
 
     return render(request, "predefinidos.html")
 
+@login_required(login_url='/login/')
 def personalizados(request):
     form = PersonalizadoForm()
 
@@ -501,6 +596,7 @@ def personalizados(request):
 
     return render(request, "personalizados_form.html", contexto)
 
+@login_required(login_url='/login/')
 def generar_grafico(request):
     if request.method not in ["POST", "GET"]:
         return JsonResponse({"error": "Método no permitido"}, status=405)
@@ -683,8 +779,7 @@ def generar_grafico(request):
                         tipo_grafico,
                         df_final["fecha"],
                         df_final["valor_y"],
-                        "Nivel Embalse",
-                        color=color_normal
+                        "Nivel Embalse"
                     )
                 )
                 if not df_destacado.empty:
@@ -693,8 +788,7 @@ def generar_grafico(request):
                             tipo_grafico,
                             df_destacado["fecha"],
                             df_destacado["valor_y"],
-                            "Nivel Embalse" + "<br>" + periodo,
-                            color=color_destacado
+                            "Nivel Embalse" + "<br>" + periodo
                         )
                     )
 
@@ -704,8 +798,7 @@ def generar_grafico(request):
                         tipo_grafico,
                         df_final["fecha"],
                         df_final["valor_y"],
-                        "Precipitación (mm)",
-                        color=color_normal
+                        "Precipitación (mm)"
                     )
                 )
                 if not df_destacado.empty:
@@ -714,8 +807,7 @@ def generar_grafico(request):
                             tipo_grafico,
                             df_destacado["fecha"],
                             df_destacado["valor_y"],
-                            "Precipitación (mm) " + "<br>" + periodo,
-                            color=color_destacado
+                            "Precipitación (mm) " + "<br>" + periodo
                         )
                     )
 
@@ -727,8 +819,7 @@ def generar_grafico(request):
                         tipo_grafico,
                         eje_x_valores,
                         df_final[instrumento.nombre],
-                        instrumento.nombre,
-                        color=color_normal
+                        instrumento.nombre
                     )
                 )
             if not df_destacado.empty:
@@ -737,8 +828,7 @@ def generar_grafico(request):
                         tipo_grafico,
                         eje_x_valores_destacado,
                         df_destacado[instrumento.nombre],
-                        instrumento.nombre + "<br>" + periodo,
-                        color=color_destacado
+                        instrumento.nombre + "<br>" + periodo
                     )
                 )
 
@@ -750,8 +840,7 @@ def generar_grafico(request):
                         df_final["fecha"],
                         df_final["valor_y2"],
                         "Precipitación (mm)",
-                        "y2",
-                        color=color_secundario
+                        "y2"
                     )
                 )
             elif eje_y_secundario == "nivel_embalse" and "valor_y2" in df_final.columns:
@@ -761,8 +850,7 @@ def generar_grafico(request):
                         df_final["fecha"],
                         df_final["valor_y2"],
                         "Nivel de embalse (mm)",
-                        "y2",
-                        color=color_secundario
+                        "y2"
                     )
                 )
             else:
@@ -789,7 +877,8 @@ def generar_grafico(request):
         fig.update_layout(
             title=f"{nombres_ejes[eje_x]} - {nombres_ejes[eje_y]}",
             xaxis_title=nombres_ejes[eje_x],
-            yaxis_title=nombres_ejes[eje_y]
+            yaxis_title=nombres_ejes[eje_y],
+            height=700
         )
 
         return JsonResponse({"grafico": fig.to_html(full_html=False)})
@@ -797,11 +886,12 @@ def generar_grafico(request):
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=500)
 
-def get_trace(tipo_grafico, x_values, y_values, eje_nombre, yaxis=None, color="blue"):
+
+def get_trace(tipo_grafico, x_values, y_values, eje_nombre, yaxis=None):
     y_values = pd.to_numeric(y_values, errors='coerce')
     if tipo_grafico == "bar":
-        return go.Bar(x=x_values, y=y_values, name=eje_nombre, marker=dict(color=color), yaxis=yaxis)
+        return go.Bar(x=x_values, y=y_values, name=eje_nombre, yaxis=yaxis)
     elif tipo_grafico == "scatter":
-        return go.Scatter(x=x_values, y=y_values, mode="markers", name=eje_nombre, yaxis=yaxis, line=dict(color=color))
+        return go.Scatter(x=x_values, y=y_values, mode="markers", name=eje_nombre, yaxis=yaxis)
     else:
-        return go.Scatter(x=x_values, y=y_values, mode="lines+markers",connectgaps=True, name=eje_nombre, yaxis=yaxis, line=dict(color=color))
+        return go.Scatter(x=x_values, y=y_values, mode="lines+markers",connectgaps=True, name=eje_nombre, yaxis=yaxis)

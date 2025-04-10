@@ -1,0 +1,140 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar sesión</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+    body {
+        background-color: #004b8d;
+        color: white;
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+
+    .login-container {
+        background: rgba(255, 255, 255, 0.20);
+        padding: 20px;
+        border-radius: 10px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.2);
+        width: 350px;
+        text-align: center;
+    }
+
+    .login-container img {
+        width: 100px;
+        margin-bottom: 15px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+        width: 100%;
+    }
+
+    input {
+        width: calc(100% - 30px);
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .password-container {
+        position: relative;
+        width: 100%;
+    }
+
+    .password-container input {
+        width: calc(100% - 30px);
+        padding: 10px;
+        padding-right: 40px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+    }
+
+    .password-container .toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #fff; /* Cambia el color del icono a blanco */
+    font-size: 18px;
+}
+
+    .btn-login {
+        background-color: #002d5a;
+        color: white;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 50%;
+        font-size: 18px;
+    }
+
+    .btn-login:hover {
+        background-color: #001f3f;
+    }
+</style>
+</head>
+<body>
+    <div class="login-container">
+        <img src="{% static 'img/logo_orsep.jpg' %}" alt="Logo ORSEP" class="logo-redondeado">
+        <h2>MONITOR-N3</h2>
+        <br>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <input type="text" name="username" placeholder="Usuario" required>
+            </div>
+            <div class="form-group password-input-container">
+                <input type="password" name="password" placeholder="Contraseña" required id="password">
+                <i class="fas fa-eye toggle-password" id="togglePassword"></i>
+            </div>
+            <br>
+            <button type="submit" class="btn-login">Iniciar sesión</button>
+        </form>
+    </div>
+    {% if error %}
+    <p style="color: red; background-color: rgba(255, 0, 0, 0.2); padding: 10px; border-radius: 5px;">
+        {{ error }}
+    </p>
+{% endif %}
+<script>
+        const password = document.querySelector("#password");
+        const togglePassword = document.querySelector("#togglePassword");
+
+        togglePassword.addEventListener("click", function () {
+            // toggle the type attribute
+            const type = password.getAttribute("type") === "password" ? "text" : "password";
+            password.setAttribute("type", type);
+            // toggle the eye icon
+            this.classList.toggle('fa-eye');
+            this.classList.toggle('fa-eye-slash');
+        });
+    </script>
+<style>
+    body {
+        background: url("{% static 'img/pl3.webp' %}") no-repeat center center fixed;
+        background-size: cover;
+        color: white;
+        font-family: Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+</style>
+</body>
+</html>

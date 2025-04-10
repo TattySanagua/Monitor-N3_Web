@@ -16,7 +16,7 @@
     </div>
 </div>
 
-<div class="form-container" style="color:black;">
+<div class="form-container" style="color:black; background: rgba(255, 255, 255, 0.70);box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
     <form method="POST" action="{% url 'freatimetro_guardar' %}" id="freatimetro-form">
         {% csrf_token %}
         <div class="form-group">
@@ -26,7 +26,7 @@
         {{ medicion_freatimetro_form.id_instrumento }}
         <div class="mb-3">
             <label for="lectura" class="form-label">Lectura:</label>
-            <input type="number" id="lectura" name="lectura" class="form-control" step="0.01" required>
+            <input type="number" id="lectura" name="lectura" class="form-control" step="0.01" min="0" required>
         </div>
 
         <div style="text-align: center; ">
@@ -48,8 +48,8 @@
                     }
                 </style>
         </div>
-        <div id="resultado-nf">
-            <h5>Nivel freático: <span id="valor-nf"></span></h5>
+        <div id="resultado-nf" style="display:none;color:black; background: rgba(255, 255, 255, 0.10);box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
+            <h5>Nivel freático = <span id="valor-nf"></span> msnm</h5>
         </div>
         <input type="hidden" id="nivel_freatico" name="nivel_freatico">
 
@@ -85,6 +85,14 @@ document.addEventListener("DOMContentLoaded", function() {
         console.error("❌ No se encontró el formulario");
         return;
     }
+
+    const labels = document.querySelectorAll('label');
+        labels.forEach(label => {
+            const input = document.getElementById(label.getAttribute('for'));
+            if (input && input.required) {
+                label.innerHTML += ' <span style="color: red;">*</span>';
+            }
+        });
 
     // Envío del formulario con fetch
     form.addEventListener("submit", function(event) {

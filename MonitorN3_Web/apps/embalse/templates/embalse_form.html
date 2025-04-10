@@ -6,7 +6,7 @@
 </header>
 <br>
 
-<div class="form-container" style="color:black;">
+<div class="form-container" style="color:black; background: rgba(255, 255, 255, 0.70);box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
     <form id="nivelembalse-form" method="POST">
         {% csrf_token %}
         {{ embalse_form.as_p }}
@@ -59,6 +59,13 @@ document.addEventListener("DOMContentLoaded", function() {
         console.error("No se encontró el formulario");
         return;
     }
+    const labels = document.querySelectorAll('label');
+        labels.forEach(label => {
+            const input = document.getElementById(label.getAttribute('for'));
+            if (input && input.required) {
+                label.innerHTML += ' <span style="color: red;">*</span>';
+            }
+        });
 
     form.addEventListener("submit", function(event) {
         event.preventDefault();

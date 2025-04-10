@@ -5,6 +5,7 @@ urlpatterns = [
     path('piezometro/nueva', views.piezometro_calcular, name='piezometro_calcular'),
     path('piezometro/guardar', views.piezometro_guardar, name='piezometro_guardar'),
     path('piezometro/tabla', views.piezometro_tabla, name='piezometro_tabla'),
+    path('modificar/<int:id>', views.editar_medicion, name='editar_medicion'),
     path('piezometro/export/excel', views.export_piezometro_excel, name='export_piezometro_excel'),
     path('piezometro/export/pdf', views.export_piezometro_pdf, name='export_piezometro_pdf'),
     path('freatimetro/nueva', views.freatimetro_calcular, name='freatimetro_calcular'),

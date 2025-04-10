@@ -7,7 +7,7 @@
     <h2 class="text-center">Gráfico Personalizado</h2>
     <br>
 
-    <div class="form-container" style="color:black;">
+    <div class="form-container" style="color:black; background: rgba(255, 255, 255, 0.70);box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
         <form id="form-grafico" method="POST" action="{% url 'generar_grafico' %}" enctype="multipart/form-data">
         {% csrf_token %}
 
@@ -121,6 +121,7 @@ document.addEventListener("DOMContentLoaded", function() {
         "nivel_freatico": JSON.parse('{{ freatimetros_json|default:"[]"|escapejs }}'),
         "caudal": JSON.parse('{{ aforadores_json|default:"[]"|escapejs }}')
     };
+
 
     function actualizarInstrumentos(select, container) {
         const valor = select.value;

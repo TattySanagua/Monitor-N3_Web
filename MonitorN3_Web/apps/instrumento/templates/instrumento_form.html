@@ -5,6 +5,8 @@
     <h1>Registrar Nuevo Instrumento</h1>
 </header>
 <br>
+
+<!-- Toast -->
 <div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1050">
     <div id="toast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
@@ -13,7 +15,9 @@
         </div>
     </div>
 </div>
-<div class="form-container" style="color:black;">
+
+<!-- Formulario -->
+<div class="form-container" style="color:black; background: rgba(255, 255, 255, 0.70);box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
     <form method="POST" id="instrumento-form">
         {% csrf_token %}
         <div class="form-group">
@@ -38,22 +42,22 @@
             <!-- Piezómetro y Freatímetro -->
             <div id="piezometro-container" style="display: none;">
                 <label for="cb">CB - Cota de Boca [msnm]:</label>
-                <input type="number" id="cb" name="cb" step="0.0001" class="form-control"><br>
+                <input type="number" id="cb" name="cb" step="0.001" min="0" class="form-control"><br>
 
                 <label for="ci">CI - Cota de Instalación [msnm]:</label>
-                <input type="number" id="ci" name="ci" step="0.0001" class="form-control"><br>
+                <input type="number" id="ci" name="ci" step="0.001" min="0" class="form-control"><br>
 
                 <label for="angulo">Ángulo de Instalación Cenital [º]:</label>
-                <input type="number" id="angulo" name="angulo" step="0.0001" class="form-control"><br>
+                <input type="number" id="angulo" name="angulo" step="0.001" min="0" class="form-control"><br>
             </div>
 
             <!-- Aforador Parshall -->
             <div id="parshall-container" style="display: none;">
                 <label for="k">K:</label>
-                <input type="number" id="k" name="k" step="0.0001" class="form-control"><br>
+                <input type="number" id="k" name="k" step="0.0001" min="0" class="form-control"><br>
 
                 <label for="u">U:</label>
-                <input type="number" id="u" name="u" step="0.0001" class="form-control"><br>
+                <input type="number" id="u" name="u" step="0.0001" min="0" class="form-control"><br>
             </div>
         </div>
         <br>
@@ -86,6 +90,14 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("❌ No se encontró el formulario");
         return;
     }
+
+    const labels = document.querySelectorAll('label');
+        labels.forEach(label => {
+            const input = document.getElementById(label.getAttribute('for'));
+            if (input && input.required) {
+                label.innerHTML += ' <span style="color: red;">*</span>';
+            }
+        });
 
     form.addEventListener("submit", function (event) {
         event.preventDefault();

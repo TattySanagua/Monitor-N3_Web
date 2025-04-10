@@ -1,65 +1,177 @@
 {% extends 'base.html' %}
-{% block title %}Análisis de Serie de Tiempo{% endblock %}
+{% block title %}Auscultación estadística{% endblock %}
 {% block content %}
-<div class="container mt-4">
-    <h2 class="text-center">📊 Análisis de la Serie de Tiempo - Nivel de Embalse</h2>
-    <br>
-
-    <!-- 🔹 Selector de período para la media móvil -->
-    <div class="form-container" style="color:black;">
-        <form method="GET" class="mb-3">
-            <label for="periodo">Seleccionar período de media móvil:</label>
-            <select name="periodo" id="periodo" class="form-control">
-                <option value="6" {% if periodo_seleccionado == 6 %}selected{% endif %}>6 meses</option>
-                <option value="12" {% if periodo_seleccionado == 12 %}selected{% endif %}>12 meses (anual)</option>
-                <option value="24" {% if periodo_seleccionado == 24 %}selected{% endif %}>2 años</option>
-                <option value="60" {% if periodo_seleccionado == 60 %}selected{% endif %}>5 años</option>
-            </select>
-            <br>
-            <div style="text-align: center; ">
-                <button class="boton">GENERAR</button>
-                <style>
-                        .boton {
-                            background-color: #004080;
-                            color: white;
-                            border: none;
-                            padding: 10px 20px;
-                            border-radius: 20px;
-                            cursor: pointer;
-                            transition: background-color 0.3s ease;
-                        }
-
-                        .boton:hover {
-                            background-color: #0057AAFF;
-                            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-                        }
-                    </style>
-                </div>
-        </form>
-    </div>
-    <br>
-    <h3 class="text-center">📉 Evolución con Media Móvil</h3>
-    <div class="mt-3">{{ grafico_evolucion|safe }}</div>
-    <br>
-    <h3 class="text-center">📊 Descomposición de la Serie</h3>
-    <div class="mt-3">{{ grafico_descomposicion|safe }}</div>
-    <br>
-    <h3>Correlograma: ACF (Autocorrelación)</h3>
-    {{ grafico_acf|safe }}
-    <br>
-    <h3>Correlograma: PACF (Autocorrelación Parcial)</h3>
-    {{ grafico_pacf|safe }}
-    <br>
-    <h3 class="text-center">📊 Modelos AR, MA y ARMA</h3>
-    <div class="mt-3">{{ grafico_predicciones|safe }}</div>
-    <br>
-    <h3 class="text-center">📊 Predicciones futuras</h3>
-    <div class="mt-3">{{ grafico_futuro|safe }}</div>
-    <br>
-    <h3 class="text-center">📊 Prueba de Estacionariedad (Dickey-Fuller)</h3>
-    <table class="table table-bordered">
-        <tr><th>¿Es Estacionaria?</th><td>{{ es_estacionaria }}</td></tr>
-        <tr><th>p-valor</th><td>{{ p_valor }}</td></tr>
-    </table>
+<div class="form-container" style="color:black; max-width: 600px;background: rgba(255, 255, 255, 0.70);box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
+<form method="post" class="d-flex flex-column align-items-center ">
+  {% csrf_token %}
+  <div class="col-md-auto m-3">
+    <label for="instrumento" class="form-label">Seleccione un Instrumento:</label>
+    <select name="instrumento" id="instrumento" class="form-control">
+      {% for instrumento in instrumentos_activos %}
+        <option value="{{ instrumento.nombre }}" {% if instrumento.nombre == instrumento_seleccionado %}selected{% endif %}>
+          {{ instrumento.nombre }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <br>
+  <h5>Constantes de Cálculo</h5>
+<div class="d-flex justify-content-center gap-3 flex-wrap mb-3">
+  <div class="form-group text-center">
+    <label for="C12">C12:</label>
+    <input type="number" name="C12" id="C12" class="form-control" step="0.01" min="0" required style="width: 100px;">
+  </div>
+  <div class="form-group text-center">
+    <label for="C13">C13:</label>
+    <input type="number" name="C13" id="C13" class="form-control" step="0.01" min="0" required style="width: 100px;">
+  </div>
+  <div class="form-group text-center">
+    <label for="C14">C14:</label>
+    <input type="number" name="C14" id="C14" class="form-control" step="0.01" min="0" required style="width: 100px;">
+  </div>
 </div>
+  <br>
+  <h5>Ingrese Niveles de Embalse Supuestos para la predicción</h5>
+  <table id="embalse-supuesto-table" class="col-md-auto m-3">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Nivel de Embalse</th>
+        <th>Acción</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><input type="date" name="fecha_supuesta[]" class="form-control"></td>
+        <td><input type="number" name="nivel_embalse_supuesto[]" step="0.01" min="0" class="form-control"></td>
+        <td><button class="boton1" type="button" onclick="agregarFila()">Agregar</button></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="boton" type="submit" id="calcular">Calcular</button>
+  <style>
+    .boton {
+      background-color: #004080;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .boton1 {
+      background-color: #0064c6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .boton:hover {
+      background-color: #0057AAFF;
+      box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    }
+  </style>
+</form>
+</div>
+<br>
+{% if EMCo and EMC and correlacion %}
+<br>
+<div class="table-responsive mi-tabla" style="max-width: 600px; margin: auto;">
+  <h5>Bondad del ajuste</h5>
+  <table class="table table-bordered">
+    <thead class="table-dark mi-tabla-thead">
+      <tr>
+        <th>Error Medio Cuadrático Inicial (EMCo)</th>
+        <th>Error Medio Cuadrático Final (EMC)</th>
+        <th>Índice de Correlación (IC)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ EMCo|floatformat:2 }}</td>
+        <td>{{ EMC|floatformat:2 }}</td>
+        <td>{{ correlacion|floatformat:2 }}%</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% endif %}
+<div id="plotly-graph">
+  {{ plot_div|safe }}
+</div>
+<br>
+{% if constantes_C %}
+  <div class="table-responsive mi-tabla">
+    <h5>Constantes Calculadas</h5>
+    <table class="table table-bordered">
+      <thead class="table-dark mi-tabla-thead">
+        <tr>
+          {% for i in constantes_C %}
+            <th>C{{ forloop.counter0 }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          {% for c in constantes_C %}
+            <td>{{ c|floatformat:2 }}</td>
+          {% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+
+<br>
+<div id="resultados" class="table-responsive mi-tabla" style="overflow: auto; max-height: 400px;">
+  {% if datos_calculados %}
+    <table class="table table-bordered">
+      <thead class="table-dark mi-tabla-thead">
+        <tr>
+          <th>Fecha</th>
+          <th>Nivel de embalse</th>
+          <th>{{ tipo_medicion|default:"Valor" }}</th>
+          <th>{{ tipo_medicion|default:"Valor" }} Calculado</th>
+          <th>Error</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for dato in datos_calculados %}
+          <tr>
+            <td>{{ dato.fecha|date:"d-m-Y" }}</td>
+            <td>{{ dato.nivel_embalse|default:"Sin dato" }}</td>
+            <td>{{ dato.valor|default:"-" }}</td>
+            <td>{% if dato.yc is None %}-{% else %}{{ dato.yc|floatformat:2 }}{% endif %}</td>
+            <td>{% if dato.error is None %}-{% else %}{{ dato.error|floatformat:2 }}{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  {% elif error %}
+    <p>{{ error }}</p>
+  {% endif %}
+</div>
+
+
+<script>
+function agregarFila() {
+    let tabla = document.getElementById('embalse-supuesto-table').getElementsByTagName('tbody')[0];
+    let nuevaFila = tabla.insertRow(tabla.rows.length);
+    let celdaFecha = nuevaFila.insertCell(0);
+    let celdaNivel = nuevaFila.insertCell(1);
+    let celdaBoton = nuevaFila.insertCell(2);
+
+    celdaFecha.innerHTML = '<input type="date" name="fecha_supuesta[]" class="form-control">';
+    celdaNivel.innerHTML = '<input type="number" name="nivel_embalse_supuesto[]" step="0.01" min="0" class="form-control">';
+    celdaBoton.innerHTML = '<button type="button" class="boton1" onclick="eliminarFila(this)">Eliminar</button>';
+  }
+
+  function eliminarFila(boton) {
+    let fila = boton.parentNode.parentNode;
+    fila.parentNode.removeChild(fila);
+  }
+</script>
 {% endblock %}

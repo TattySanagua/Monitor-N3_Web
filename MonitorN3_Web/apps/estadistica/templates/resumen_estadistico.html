@@ -5,7 +5,7 @@
     <h2 class="text-center">Resumen Estadístico</h2>
     <br>
 
-    <div class="form-container" style="color:black;">
+    <div class="form-container" style="color:black; background: rgba(255, 255, 255, 0.70);box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
         <form method="get">
             <div class="form-group">
                 <label for="parametro">Seleccione el parámetro:</label>
@@ -39,7 +39,7 @@
     </div>
     <br>
 
-    <div class="form-container" style="color:black;">
+    <div class="form-container" style="color:black; background: rgba(255, 255, 255, 0.70);box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
         <h3 class="text-center">📊 Estadísticas</h3>
         {% if parametro_seleccionado == "nivel_piezometrico" or parametro_seleccionado == "caudal" or parametro_seleccionado == "nivel_freatico" %}
             {% for instrumento, estadistica in estadisticas.items %}

@@ -1,12 +1,14 @@
 from django.shortcuts import render
 from . forms.precipitacion_form import PrecipitacionForm
 from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
 
-
+@login_required(login_url='/login/')
 def precipitacion_form(request):
     precipitacion_form = PrecipitacionForm()
     return render(request, 'precipitacion_form.html', {'precipitacion_form': precipitacion_form})
 
+@login_required(login_url='/login/')
 def precipitacion(request):
     if request.method == "POST":
         precipitacion_form = PrecipitacionForm(request.POST)
