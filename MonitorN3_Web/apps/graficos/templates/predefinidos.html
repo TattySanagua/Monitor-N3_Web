@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% block title %}Gráficos Predefinidos{% endblock %}
 {% block content %}
 <div class="container mt-4">
     <h2>Gráficos Predefinidos</h2>
@@ -7,16 +7,16 @@
 
     <div class="form-container" style="color:black; background: rgba(255, 255, 255, 0.70);box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
         <form method="post" action="{% url 'predefinidos_grafico' %}" class="d-flex flex-column align-items-center ">
-        {% csrf_token %}
-        <label for="grafico">Selecciona un gráfico:</label>
+            {% csrf_token %}
+            <label for="grafico">Selecciona un gráfico:</label>
 
-        <select name="grafico_seleccionado" id="grafico" class="form-control">
-            {% for key, value in graficos.items %}
-                <option value="{{ key }}">{{ value }}</option>
-            {% endfor %}
-        </select>
-        <br>
-        <div style="text-align: center; ">
+            <select name="grafico_seleccionado" id="grafico" class="form-control">
+                {% for key, value in graficos.items %}
+                    <option value="{{ key }}">{{ value }}</option>
+                {% endfor %}
+            </select>
+            <br>
+            <div style="text-align: center; ">
                 <button class="boton">Graficar</button>
                 <style>
                         .boton {
@@ -35,12 +35,20 @@
                         }
                     </style>
                 </div>
-    </form>
+        </form>
+    </div>
 
+    <div id="loading-message" style="display:none; text-align:center; margin-top: 20px;">
+            <p style="font-size: 18px; color: #b5e1f8;">⏳ Generando gráfico, espere un momento...</p>
     </div>
     <br>
     {% if grafico %}
         <div>{{ grafico|safe }}</div>
     {% endif %}
 </div>
+<script>
+document.querySelector("form").addEventListener("submit", function() {
+    document.getElementById("loading-message").style.display = "block";
+});
+</script>
 {% endblock %}

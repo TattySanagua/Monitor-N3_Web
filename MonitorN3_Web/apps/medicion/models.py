@@ -10,6 +10,7 @@ class Medicion(models.Model):
 
     class Meta:
         db_table = 'medicion'
+        unique_together = ('id_instrumento', 'fecha')
 
     def __str__(self):
         return f"{self.id_instrumento.nombre} - {self.fecha} - {self.valor}"

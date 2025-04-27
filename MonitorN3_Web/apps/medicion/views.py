@@ -1,19 +1,19 @@
 import json, math
 from django.contrib.auth.decorators import login_required, user_passes_test
 from datetime import datetime
+from django.utils import timezone
 import pandas as pd
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponse
 from decimal import Decimal, InvalidOperation
-
 from django.urls import reverse
-
+from django.db import IntegrityError
 from .forms.medicion_form import MedicionPiezometroForm, MedicionUpdateForm,MedicionFreatimetroForm, MedicionAforadorVolumetrico, MedicionAforadorParshall
 from ..instrumento.models import Parametro, Instrumento
 from ..embalse.models import Embalse
 from .models import Medicion
 from reportlab.lib.pagesizes import letter, landscape
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
@@ -38,8 +38,6 @@ def piezometro_calcular(request):
             except ValueError:
                 return JsonResponse({'error': 'Lectura debe ser un valor numérico'}, status=400)
 
-            if lectura < 0:
-                return JsonResponse({'error': 'La lectura no puede ser un valor negativo'}, status=400)
 
             cb_param = Parametro.objects.filter(id_instrumento=id_instrumento, nombre_parametro='CB').first()
             angulo_param = Parametro.objects.filter(id_instrumento=id_instrumento, nombre_parametro='angulo').first()
@@ -64,14 +62,51 @@ def piezometro_guardar(request):
     if request.method == 'POST':
         form = MedicionPiezometroForm(request.POST)
         if form.is_valid():
-            medicion = form.save(commit=False)
-            medicion.valor = request.POST.get('nivel_piezometrico')
-            medicion.save()
-            return JsonResponse({"success": True, "message": "✅ Nivel piezométrico guardado correctamente."})
-        else:
-            return JsonResponse({"success": False, "message": "❌ Error al guardar la medición. Verifica los datos."})
+            fecha = form.cleaned_data['fecha']
+            instrumento = form.cleaned_data['id_instrumento']
 
-    return JsonResponse({"success": False, "message": "❌ Solicitud no válida."})
+            hoy = timezone.now().date()
+            if fecha > hoy:
+                return JsonResponse({
+                    "success": False,
+                    "message": "⚠️ No se pueden registrar mediciones con fecha futura."
+                })
+
+            existe = Medicion.objects.filter(fecha=fecha, id_instrumento=instrumento).exists()
+
+            if existe:
+                return JsonResponse({
+                    "success": False,
+                    "message": "⚠️ Ya existe una medición registrada para este instrumento en la fecha seleccionada."
+                })
+
+            try:
+                medicion = form.save(commit=False)
+                medicion.valor = request.POST.get('nivel_piezometrico')
+                medicion.save()
+                return JsonResponse({
+                    "success": True,
+                    "message": "✅ Nivel piezométrico guardado correctamente."
+                })
+            except IntegrityError:
+                return JsonResponse({
+                    "success": False,
+                    "message": "⚠️ Ya existe una medición registrada para este instrumento en la fecha seleccionada."
+                })
+
+        else:
+
+            return JsonResponse({
+                "success": False,
+                "message": "⚠️ Ya existe una medición registrada para este instrumento en la fecha seleccionada.",
+
+            })
+
+    return JsonResponse({
+        "success": False,
+        "message": "❌ Solicitud no válida."
+    })
+
 
 @login_required(login_url='/login/')
 @user_passes_test(user_is_admin, login_url='/login/')
@@ -81,6 +116,14 @@ def editar_medicion(request, id):
     if request.method == "POST":
         form = MedicionUpdateForm(request.POST, instance=medicion)
         if form.is_valid():
+            fecha = form.cleaned_data['fecha']
+            hoy = timezone.now().date()
+
+            if fecha > hoy:
+                return JsonResponse({
+                    "success": False,
+                    "message": "⚠️ No se puede asignar una fecha futura a la medición."
+                })
             form.save()
             tipo = medicion.id_instrumento.id_tipo.nombre_tipo.upper()
 
@@ -138,8 +181,6 @@ def freatimetro_calcular(request):
             except ValueError:
                 return JsonResponse({'error': 'Lectura debe ser un valor numérico'}, status=400)
 
-            if lectura < 0:
-                return JsonResponse({'error': 'La lectura no puede ser un valor negativo'}, status=400)
 
             cb_param = Parametro.objects.filter(id_instrumento=id_instrumento, nombre_parametro='CB').first()
             angulo_param = Parametro.objects.filter(id_instrumento=id_instrumento, nombre_parametro='angulo').first()
@@ -164,25 +205,50 @@ def freatimetro_guardar(request):
     if request.method == 'POST':
         form = MedicionFreatimetroForm(request.POST)
         if form.is_valid():
-            medicion = form.save(commit=False)
-            nivel_freatico = request.POST.get('nivel_freatico')
+            fecha = form.cleaned_data['fecha']
+            instrumento = form.cleaned_data['id_instrumento']
 
-            if nivel_freatico:
-                try:
-                    medicion.valor = float(nivel_freatico)
-                    medicion.save()
-                    return JsonResponse({"success": True, "message": "✅ Nivel freático guardado correctamente."})
-                except ValueError:
-                    return JsonResponse(
-                        {"success": False, "message": "❌ Error: El nivel freático debe ser un número válido."},
-                        status=400)
-            else:
-                return JsonResponse(
-                    {"success": False, "message": "❌ Error: No se encontró el nivel freático calculado."}, status=400)
+            hoy = timezone.now().date()
+            if fecha > hoy:
+                return JsonResponse({
+                    "success": False,
+                    "message": "⚠️ No se pueden registrar mediciones con fecha futura."
+                })
+
+            existe = Medicion.objects.filter(fecha=fecha, id_instrumento=instrumento).exists()
+
+            if existe:
+                return JsonResponse({
+                    "success": False,
+                    "message": "⚠️ Ya existe una medición registrada para este instrumento en la fecha seleccionada."
+                })
+
+            try:
+                medicion = form.save(commit=False)
+                medicion.valor = request.POST.get('nivel_freatico')
+                medicion.save()
+                return JsonResponse({
+                    "success": True,
+                    "message": "✅ Nivel freatico guardado correctamente."
+                })
+            except IntegrityError:
+                return JsonResponse({
+                    "success": False,
+                    "message": "⚠️ Ya existe una medición registrada para este instrumento en la fecha seleccionada."
+                })
+
         else:
-            return JsonResponse({"success": False, "message": "❌ Error: Datos inválidos en el formulario."}, status=400)
 
-    return JsonResponse({"success": False, "message": "❌ Solicitud no válida."}, status=400)
+            return JsonResponse({
+                "success": False,
+                "message": "⚠️ Ya existe una medición registrada para este instrumento en la fecha seleccionada.",
+
+            })
+
+    return JsonResponse({
+        "success": False,
+        "message": "❌ Solicitud no válida."
+    })
 
 @login_required(login_url='/login/')
 def afovolumetrico_calcular(request):
@@ -193,21 +259,30 @@ def afovolumetrico_calcular(request):
             v2, t2 = form.cleaned_data['volumen_2'], form.cleaned_data['tiempo_2']
             v3, t3 = form.cleaned_data['volumen_3'], form.cleaned_data['tiempo_3']
 
-            q1 = v1 / t1 if v1 is not None and t1 else None
-            q2 = v2 / t2 if v2 is not None and t2 else None
-            q3 = v3 / t3 if v3 is not None and t3 else None
+            caudales = []
+            resultados = {}
 
-            valores = [q for q in [q1, q2, q3] if q is not None]
-            q_promedio = sum(valores) / len(valores) if valores else 0
+            for i, (v, t) in enumerate([(v1, t1), (v2, t2), (v3, t3)], start=1):
+                if v is not None and t is not None:
+                    if v < 0:
+                        return JsonResponse({'error': f'El volumen #{i} no puede ser negativo.'}, status=400)
+                    if t <= 0:
+                        return JsonResponse({'error': f'El tiempo #{i} debe ser mayor a cero.'}, status=400)
+                    q = v / t
+                    caudales.append(q)
+                    resultados[f'q{i}'] = round(q, 2)
+                else:
+                    resultados[f'q{i}'] = "Sin valor"
 
-            return JsonResponse({
-                'q1': round(q1, 2) if q1 is not None else "Sin valor",
-                'q2': round(q2, 2) if q2 is not None else "Sin valor",
-                'q3': round(q3, 2) if q3 is not None else "Sin valor",
-                'q_promedio': round(q_promedio, 2) if valores else "Sin valor"
-            })
+            if not caudales:
+                return JsonResponse({'error': 'Debe ingresar al menos un par de volumen y tiempo válidos.'}, status=400)
+
+            q_promedio = sum(caudales) / len(caudales)
+            resultados['q_promedio'] = round(q_promedio, 2)
+
+            return JsonResponse(resultados)
         else:
-            return JsonResponse({'error': form.errors.as_json()}, status=400)
+            return JsonResponse({'error': form.errors}, status=400)
 
     else:
         form = MedicionAforadorVolumetrico()
@@ -218,20 +293,63 @@ def afovolumetrico_guardar(request):
     if request.method == 'POST':
         form = MedicionAforadorVolumetrico(request.POST)
         if form.is_valid():
-            medicion = form.save(commit=False)
-            q_promedio = request.POST.get('q_promedio')
+            fecha = form.cleaned_data['fecha']
+            instrumento = form.cleaned_data['id_instrumento']
+
+            hoy = timezone.now().date()
+            if fecha > hoy:
+                return JsonResponse({
+                    "success": False,
+                    "message": "No se pueden registrar mediciones con fecha futura."
+                })
+
+            existe = Medicion.objects.filter(fecha=fecha, id_instrumento=instrumento).exists()
+
+            if existe:
+                return JsonResponse({
+                    "success": False,
+                    "message": "⚠️ Ya existe una medición registrada para este instrumento en la fecha seleccionada."
+                })
 
             try:
-                medicion.valor = Decimal(q_promedio)
+                medicion = form.save(commit=False)
+                medicion.valor = request.POST.get('q_promedio')
                 medicion.save()
-                return JsonResponse({"success": True, "message": "✅ Caudal guardado correctamente."})
-            except (InvalidOperation, TypeError):
-                return JsonResponse(
-                    {"success": False, "message": "❌ Error: El caudal promedio debe ser un número válido."}, status=400)
-        else:
-            return JsonResponse({"success": False, "message": "❌ Error: Datos inválidos en el formulario."}, status=400)
+                return JsonResponse({
+                    "success": True,
+                    "message": "✅ Caudal guardado correctamente."
+                })
+            except IntegrityError:
+                return JsonResponse({
+                    "success": False,
+                    "message": "⚠️ Ya existe una medición registrada para este instrumento en la fecha seleccionada."
+                })
 
-    return JsonResponse({"success": False, "message": "❌ Solicitud no válida."}, status=400)
+
+
+        else:
+
+            errores = form.errors.get('__all__')
+
+            if getattr(errores, 'code', '') == 'unique_together':
+
+                mensaje = "⚠️ Ya existe una medición registrada para este instrumento en la fecha seleccionada."
+
+            else:
+
+                mensaje = "❌ Error: Datos inválidos en el formulario."
+
+            return JsonResponse({
+
+                "success": False,
+
+                "message": mensaje
+
+            })
+    return JsonResponse({
+        "success": False,
+        "message": "❌ Solicitud no válida."
+    })
 
 @login_required(login_url='/login/')
 def afoparshall_calcular(request):
@@ -283,24 +401,59 @@ def afoparshall_guardar(request):
     if request.method == 'POST':
         form = MedicionAforadorParshall(request.POST)
         if form.is_valid():
-            medicion = form.save(commit=False)
-            caudal_calculado = request.POST.get('caudal_calculado')
+            fecha = form.cleaned_data['fecha']
+            instrumento = form.cleaned_data['id_instrumento']
 
+            hoy = timezone.now().date()
+            if fecha > hoy:
+                return JsonResponse({
+                    "success": False,
+                    "message": "⚠️ No se pueden registrar mediciones con fecha futura."
+                })
+
+            existe = Medicion.objects.filter(fecha=fecha, id_instrumento=instrumento).exists()
+
+            if existe:
+                return JsonResponse({
+                    "success": False,
+                    "message": "⚠️ Ya existe una medición registrada para este instrumento en la fecha seleccionada."
+                })
+
+            caudal_calculado = request.POST.get('caudal_calculado')
             if caudal_calculado:
                 try:
+                    medicion = form.save(commit=False)
                     medicion.valor = float(caudal_calculado)
                     medicion.save()
-                    return JsonResponse({"success": True, "message": "✅ Caudal guardado correctamente."})
+                    return JsonResponse({
+                        "success": True,
+                        "message": "✅ Caudal guardado correctamente."
+                    })
                 except ValueError:
-                    return JsonResponse({"success": False, "message": "❌ Error: El caudal debe ser un número válido."},
-                                        status=400)
+                    return JsonResponse({
+                        "success": False,
+                        "message": "❌ Error: El caudal debe ser un número válido."
+                    }, status=400)
+                except IntegrityError:
+                    return JsonResponse({
+                        "success": False,
+                        "message": "⚠️ Ya existe una medición registrada para este instrumento en la fecha seleccionada."
+                    })
             else:
-                return JsonResponse({"success": False, "message": "❌ Error: No se encontró el caudal calculado."},
-                                    status=400)
+                return JsonResponse({
+                    "success": False,
+                    "message": "❌ Error: No se encontró el caudal calculado."
+                }, status=400)
         else:
-            return JsonResponse({"success": False, "message": "❌ Error: Datos inválidos en el formulario."}, status=400)
+            return JsonResponse({
+                "success": False,
+                "message": "⚠️ Ya existe una medición registrada para este instrumento en la fecha seleccionada."
+            })
 
-    return JsonResponse({"success": False, "message": "❌ Solicitud no válida."}, status=400)
+    return JsonResponse({
+        "success": False,
+        "message": "❌ Solicitud no válida."
+    }, status=400)
 
 
 def obtener_datos_tabla(tipo_instrumento, template, request):

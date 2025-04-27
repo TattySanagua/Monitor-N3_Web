@@ -7,6 +7,12 @@ class EmbalseForm(ModelForm):
         model = Embalse
         fields='__all__'
 
+        labels = {
+            'fecha': 'Fecha',
+            'hora': 'Hora',
+            'nivel_embalse': 'Nivel Embalse (msnm)',
+        }
+
         widgets={
             'fecha': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'hora': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),

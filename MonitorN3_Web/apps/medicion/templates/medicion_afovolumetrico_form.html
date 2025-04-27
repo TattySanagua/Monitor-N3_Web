@@ -6,6 +6,7 @@
     <h1>Caudal - Aforador Volumétrico</h1>
 </header>
 <br>
+
 <div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1050">
     <div id="toast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
         <div class="d-flex">
@@ -106,7 +107,6 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    console.log("✅ Script cargado correctamente");
 
     let form = document.getElementById("aforador-volumetrico-form");
     if (!form) {
@@ -122,43 +122,63 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
+    document.getElementById("calcular-caudal").addEventListener("click", function () {
+        let formData = new FormData(form);
+
+        fetch("{% url 'afovolumetrico_calcular' %}", {
+            method: "POST",
+            body: formData,
+            headers: {
+                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            let toastElement = document.getElementById("toast");
+            let toastMessage = document.getElementById("toast-message");
+            let toastContainer = new bootstrap.Toast(toastElement);
+
+            if (data.error) {
+                toastElement.classList.remove("bg-success");
+                toastElement.classList.add("bg-danger");
+
+                try {
+                    const errorData = data.error;
+                    let readableError = "";
+                    if (errorData.__all__ && Array.isArray(errorData.__all__)) {
+                        readableError = errorData.__all__.join("\n");
+                    } else {
+                        for (const field in errorData) {
+                            if (Array.isArray(errorData[field]) && errorData[field].length > 0) {
+                                readableError += `${document.querySelector(`label[for="id_${field}"]`)?.textContent || field} no es válido.\n`;
+                                readableError += errorData[field].join("\n");
+                                break;
+                            }
+                        }
+                    }
+                    toastMessage.innerText = "❌ Error:\n" + readableError;
+                } catch (e) {
+                    console.error("Error al parsear el JSON de errores:", e);
+                    toastMessage.innerText = "❌ Error: Ocurrió un problema con los datos.";
+                }
+                toastContainer.show();
+                document.getElementById("resultado-caudales").style.display = "none";
+            } else {
+                document.getElementById("resultado-caudales").style.display = "block";
+                document.getElementById("caudal-1").textContent = data.q1;
+                document.getElementById("caudal-2").textContent = data.q2;
+                document.getElementById("caudal-3").textContent = data.q3;
+                document.getElementById("caudal-promedio").textContent = data.q_promedio;
+                document.getElementById("q_promedio").value = data.q_promedio;
+            }
+        })
+        .catch(error => console.error("❌ Error en la solicitud:", error));
+    });
+
     form.addEventListener("submit", function(event) {
         event.preventDefault();
-        console.log("📤 Enviando datos...");
+        console.log("Enviando datos para guardar...");
 
-        const campos = [
-            { id: "id_volumen_1", tipo: "volumen", nombre: "Volumen 1" },
-            { id: "id_volumen_2", tipo: "volumen", nombre: "Volumen 2" },
-            { id: "id_volumen_3", tipo: "volumen", nombre: "Volumen 3" },
-            { id: "id_tiempo_1", tipo: "tiempo", nombre: "Tiempo 1" },
-            { id: "id_tiempo_2", tipo: "tiempo", nombre: "Tiempo 2" },
-            { id: "id_tiempo_3", tipo: "tiempo", nombre: "Tiempo 3" }
-        ];
-
-        let hayErrores = false;
-
-        campos.forEach(campo => {
-            const input = document.getElementById(campo.id);
-            if (input && input.value !== "") {
-                const valor = parseFloat(input.value);
-
-                if (
-                    (campo.tipo === "volumen" && valor < 0) ||
-                    (campo.tipo === "tiempo" && valor <= 0)
-                ) {
-                    input.classList.add("is-invalid");
-                    hayErrores = true;
-                } else {
-                    input.classList.remove("is-invalid");
-                }
-            }
-        });
-
-        if (hayErrores) {
-            mostrarErrorToast("❌ Revisa los campos: los volúmenes no pueden ser negativos y los tiempos deben ser mayores que cero.");
-            return;
-        }
-        calcularCaudales();
         let formData = new FormData(this);
 
         fetch("{% url 'afovolumetrico_guardar' %}", {
@@ -170,7 +190,7 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .then(response => response.json())
         .then(data => {
-            console.log("📥 Respuesta recibida:", data);
+            console.log("📥 Respuesta de guardado:", data);
 
             let toastElement = document.getElementById("toast");
             let toastMessage = document.getElementById("toast-message");
@@ -187,98 +207,46 @@ document.addEventListener("DOMContentLoaded", function() {
                 toastElement.classList.remove("bg-success");
                 toastElement.classList.add("bg-danger");
 
-                let mensaje = data.message;
-
-                if (data.errors) {
-                    for (let campo in data.errors) {
-                        const mensajes = data.errors[campo];
-                        mensajes.forEach(errorObj => {
-                            mensaje += `\n${errorObj.message}`;
-                        });
+                try {
+                    const isJSON = data.message.trim().startsWith("{") || data.message.trim().startsWith("[");
+                    if (isJSON) {
+                        const errorData = JSON.parse(data.message);
+                        let readableError = "";
+                        if (errorData.__all__ && Array.isArray(errorData.__all__)) {
+                            readableError = errorData.__all__.join("\n");
+                        } else {
+                            for (const field in errorData) {
+                                if (Array.isArray(errorData[field]) && errorData[field].length > 0) {
+                                    readableError += `${document.querySelector(`label[for="id_${field}"]`)?.textContent || field} no es válido.\n`;
+                                    readableError += errorData[field].join("\n");
+                                    break;
+                                }
+                            }
+                        }
+                        toastMessage.innerText = "❌ Error:\n" + readableError;
+                    } else {
+                        toastMessage.innerText = "❌ Error:\n" + data.message;
                     }
+                } catch (e) {
+                    console.error("Error al manejar el mensaje de error:", e);
+                    toastMessage.innerText = "❌ Error: Ocurrió un problema con los datos.";
                 }
-
-                toastMessage.innerText = mensaje;
                 toastContainer.show();
             }
         })
-        .catch(error => console.error("❌ Error en la solicitud:", error));
+        .catch(error => console.error("❌ Error en la solicitud de guardado:", error));
     });
-
-    document.getElementById("calcular-caudal").addEventListener("click", function () {
-    const campos = [
-        { id: "id_volumen_1", tipo: "volumen", nombre: "Volumen 1" },
-        { id: "id_volumen_2", tipo: "volumen", nombre: "Volumen 2" },
-        { id: "id_volumen_3", tipo: "volumen", nombre: "Volumen 3" },
-        { id: "id_tiempo_1", tipo: "tiempo", nombre: "Tiempo 1" },
-        { id: "id_tiempo_2", tipo: "tiempo", nombre: "Tiempo 2" },
-        { id: "id_tiempo_3", tipo: "tiempo", nombre: "Tiempo 3" }
-    ];
-
-    let errores = [];
-
-    for (let campo of campos) {
-        const input = document.getElementById(campo.id);
-        if (input && input.value !== "") {
-            const valor = parseFloat(input.value);
-            if (campo.tipo === "volumen" && valor < 0) {
-                errores.push(`${campo.nombre} no puede ser negativo.`);
-            }
-            if (campo.tipo === "tiempo" && valor <= 0) {
-                errores.push(`${campo.nombre} debe ser mayor que cero.`);
-            }
-        }
-    }
-
-    if (errores.length > 0) {
-        mostrarErrorToast("❌ " + errores.join("\n"));
-        return;
-    }
-
-    calcularCaudales();
 });
 
-    function mostrarErrorToast(mensaje) {
-        const toastElement = document.getElementById("toast");
-        const toastMessage = document.getElementById("toast-message");
-        const toastContainer = new bootstrap.Toast(toastElement);
+function mostrarErrorToast(mensaje) {
+    const toastElement = document.getElementById("toast");
+    const toastMessage = document.getElementById("toast-message");
+    const toastContainer = new bootstrap.Toast(toastElement);
 
-        toastElement.classList.remove("bg-success");
-        toastElement.classList.add("bg-danger");
-        toastMessage.innerText = mensaje;
-        toastContainer.show();
-    }
-
-    function calcularCaudales() {
-    const v1 = parseFloat(document.getElementById("id_volumen_1").value);
-    const t1 = parseFloat(document.getElementById("id_tiempo_1").value);
-    const v2 = parseFloat(document.getElementById("id_volumen_2").value);
-    const t2 = parseFloat(document.getElementById("id_tiempo_2").value);
-    const v3 = parseFloat(document.getElementById("id_volumen_3").value);
-    const t3 = parseFloat(document.getElementById("id_tiempo_3").value);
-
-    let caudales = [];
-
-    // validaciones de volumen NO negativo y tiempo > 0
-    if (!isNaN(v1) && v1 >= 0 && !isNaN(t1) && t1 > 0) caudales.push(v1 / t1);
-    if (!isNaN(v2) && v2 >= 0 && !isNaN(t2) && t2 > 0) caudales.push(v2 / t2);
-    if (!isNaN(v3) && v3 >= 0 && !isNaN(t3) && t3 > 0) caudales.push(v3 / t3);
-
-    if (caudales.length === 0) {
-        mostrarErrorToast("⚠️ No hay suficientes datos válidos para calcular el caudal.");
-        return;
-    }
-
-    document.getElementById("resultado-caudales").style.display = "block";
-
-    document.getElementById("caudal-1").textContent = (!isNaN(v1) && v1 >= 0 && !isNaN(t1) && t1 > 0) ? (v1 / t1).toFixed(2) : "-";
-    document.getElementById("caudal-2").textContent = (!isNaN(v2) && v2 >= 0 && !isNaN(t2) && t2 > 0) ? (v2 / t2).toFixed(2) : "-";
-    document.getElementById("caudal-3").textContent = (!isNaN(v3) && v3 >= 0 && !isNaN(t3) && t3 > 0) ? (v3 / t3).toFixed(2) : "-";
-
-    const promedio = caudales.reduce((a, b) => a + b, 0) / caudales.length;
-    document.getElementById("caudal-promedio").textContent = promedio.toFixed(2);
-    document.getElementById("q_promedio").value = promedio.toFixed(2);
+    toastElement.classList.remove("bg-success");
+    toastElement.classList.add("bg-danger");
+    toastMessage.innerText = mensaje;
+    toastContainer.show();
 }
-});
 </script>
 {% endblock %}

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block title %}Aforador{% endblock %}
+{% block title %}Piezómetro{% endblock %}
 {% block body_id %}piezometro-page{% endblock %}
 {% block content %}
 <header>
@@ -15,13 +15,14 @@
         </div>
             {{ medicion_piezometro_form.id_instrumento.label_tag }}
             {{ medicion_piezometro_form.id_instrumento }}
+        <br>
         <div class="mb-3">
-            <label for="lectura" class="form-label">Lectura:</label>
-            <input type="number" id="lectura" name="lectura" class="form-control" step="0.01" min="0" required>
+            <label for="lectura" class="form-label">Lectura (m):</label>
+            <input type="number" id="lectura" name="lectura" class="form-control" step="0.001" required>
         </div>
 
         <div style="text-align: center; ">
-                <button class="boton-calc" id="calcular-np">Calcular</button>
+                <button class="boton-calc" id="calcular-np" type="button">Calcular</button>
                 <style>
                     .boton-calc {
                         background-color: #007536;
@@ -78,7 +79,6 @@
 </div>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    console.log("✅ Script cargado correctamente");
 
     let form = document.getElementById("piezometro-form");
     if (!form) {
@@ -96,7 +96,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     form.addEventListener("submit", function(event) {
         event.preventDefault();
-        console.log("📤 Enviando datos...");
 
         let formData = new FormData(this);
 
@@ -109,7 +108,6 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .then(response => response.json())
         .then(data => {
-            console.log("📥 Respuesta recibida:", data);
 
             let toastElement = document.getElementById("toast");
             let toastMessage = document.getElementById("toast-message");

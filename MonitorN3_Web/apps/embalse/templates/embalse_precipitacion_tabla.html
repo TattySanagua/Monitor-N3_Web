@@ -23,15 +23,11 @@
             <table class="table table-bordered table-striped text-center table-hover mi-tabla-tabla">
                 <thead class="table-dark mi-tabla-thead">
                     <tr>
-                        <th>Fecha</th>
-                        <th>Nivel Embalse</th>
-                        <th>Precipitación</th>
-                    </tr>
-                    <tr>
-                        <th>dd-mm-YYYY</th>
-                        <th>[msnm]</th>
-                        <th>[mm]</th>
-
+                        <th>Fecha [dd-mm-YYYY]</th>
+                        <th>Nivel Embalse [msnm]</th>
+                        <th>Editar</th>
+                        <th>Precipitación[mm]</th>
+                        <th>Editar</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -39,7 +35,9 @@
                         <tr>
                             <td>{{ fila.fecha }}</td>
                             <td>{{ fila.nivel_embalse }}</td>
+                            <td>{% if fila.embalse_id %}<a href="{% url 'editar_embalse' fila.embalse_id %}" class="ms-1 text-muted" style="font-size:0.65rem;"><i class="fas fa-pen" style="color:#bcbcbc;"></i></a>{% endif %}</td>
                             <td>{{ fila.precipitaciones }}</td>
+                            <td>{% if fila.precipitacion_id %}<a href="{% url 'editar_precipitacion' fila.precipitacion_id %}" class="ms-1 text-muted" style="font-size:0.65rem;"><i class="fas fa-pen" style="color:#bcbcbc;"></i></a>{% endif %}</td>
                         </tr>
                     {% empty %}
                         <tr>

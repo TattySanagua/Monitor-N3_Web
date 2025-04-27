@@ -228,6 +228,9 @@ def predicciones(request):
     if request.method == 'POST':
 
         nombre_instrumento = request.POST.get('instrumento')
+        aforadores = ['AFO3-EI', 'AFO3-PP', 'AFO3-TOT']
+        es_aforador = nombre_instrumento in aforadores
+
         fechas_supuestas = request.POST.getlist('fecha_supuesta[]')
         niveles_embalse_supuestos = request.POST.getlist('nivel_embalse_supuesto[]')
 
@@ -257,6 +260,17 @@ def predicciones(request):
 
             # Asegurarse de que la columna 'fecha' sea de tipo datetime de Pandas
             df_combinado['fecha'] = pd.to_datetime(df_combinado['fecha'])
+            fecha_max = df_combinado['fecha'].max()
+
+            # Filtrar fechas con nivel de embalse faltante
+            fechas_sin_embalse = df_combinado[df_combinado['nivel_embalse'].isna()]['fecha'].dt.strftime(
+                '%d-%m-%Y').tolist()
+
+            if fechas_sin_embalse:
+                context[
+                    'error'] = "Advertencia: Para las siguientes fechas no se registraron niveles de embalse: " + ", ".join(
+                    fechas_sin_embalse) + ". Por favor, complete los datos faltantes para poder realizar la auscultación estadística."
+                return render(request, 'predicciones_modelos.html', context)
 
             # --- Cálculos Estadísticos ---
             df_calculos = df_combinado[['fecha', 'nivel_embalse', 'valor']].copy()
@@ -303,6 +317,10 @@ def predicciones(request):
             df_calculos['valor'] = pd.to_numeric(df_calculos['valor'], errors='coerce').astype(
                 float)
 
+            context['df_calculos'] = df_calculos.to_dict(orient='records')
+            context['df_calculos_columnas'] = df_calculos.columns.tolist()
+
+
             X = df_calculos[cols_f].values
             y = df_calculos['valor'].values
 
@@ -314,6 +332,9 @@ def predicciones(request):
                     C[6] * df_calculos['f6'] + C[7] * df_calculos['f7'] + C[8] * df_calculos['f8'] +
                     C[9] * df_calculos['f9'] + C[10] * df_calculos['f10']
             )
+
+            if es_aforador:
+                df_calculos['yc'] = df_calculos['yc'].apply(lambda x: max(x, 0))
 
             df_calculos['error'] = df_calculos['valor'] - df_calculos['yc']
 
@@ -384,6 +405,9 @@ def predicciones(request):
             X_extrapolacion = df_calculos_extrapolacion[cols_f].values
             df_calculos_extrapolacion['yc'] = np.dot(X_extrapolacion, C)
 
+            if es_aforador:
+                df_calculos_extrapolacion['yc'] = df_calculos_extrapolacion['yc'].apply(lambda x: max(x, 0))
+
             if fechas_supuestas and niveles_embalse_supuestos:
                 df_resultado = pd.concat([df_calculos, df_calculos_extrapolacion], ignore_index=True, sort=False)
             else:
@@ -406,7 +430,8 @@ def predicciones(request):
                 x=df_resultado['fecha'],
                 y=df_resultado['nivel_embalse'],
                 mode='lines',
-                name='NE'
+                name='NE',
+                yaxis='y2'
             ))
 
             # Datos reales
@@ -434,13 +459,15 @@ def predicciones(request):
                 line=dict(color='#FFA500')
             ))
 
-            fig.add_trace(go.Scatter(
-                x=df_resultado['fecha'],
-                y=df_resultado['banda_inferior'],
-                mode='lines',
-                name='Umbral de Normalidad',
-                line=dict(color='#FFA500')
-            ))
+            # Banda inferior (solo si NO es aforador)
+            if not es_aforador:
+                fig.add_trace(go.Scatter(
+                    x=df_resultado['fecha'],
+                    y=df_resultado['banda_inferior'],
+                    mode='lines',
+                    name='Umbral de Normalidad',
+                    line=dict(color='#FFA500')
+                ))
 
             # Datos extrapolados
             if fechas_supuestas and niveles_embalse_supuestos:
@@ -448,7 +475,8 @@ def predicciones(request):
                     x=df_calculos_extrapolacion['fecha'],
                     y=df_calculos_extrapolacion['yc'],
                     mode='lines+markers',
-                    name=tipo_medicion + ' (Extrapolado)'
+                    name=tipo_medicion + ' (Extrapolado)',
+                    line=dict(color='#00BFFF')
                 ))
 
             fig.update_layout(
@@ -457,6 +485,11 @@ def predicciones(request):
                 yaxis_title=tipo_medicion,
                 height=600,
                 showlegend=True,
+                legend=dict(
+                    x=1.05,
+                    y=1,
+                    xanchor='left'
+                ),
                 template='plotly_white',
                 xaxis=dict(
                     rangeselector=dict(
@@ -467,7 +500,20 @@ def predicciones(request):
                         ])
                     ),
                     rangeslider=dict(visible=True),
-                    type="date"
+                    type="date",
+                    range=[fecha_max - pd.DateOffset(years=3), fecha_max],
+                    tickformat="%d-%m-%Y"
+                ),
+                yaxis=dict(
+                    title=tipo_medicion,
+                    rangemode='tozero' if es_aforador else 'normal'
+                ),
+                yaxis2=dict(
+                    title="NE(msnm)",
+                    overlaying='y',
+                    side='right',
+                    showgrid=False,
+                    range=[df_resultado['nivel_embalse'].min() - 0.5, df_resultado['nivel_embalse'].max() + 0.5]
                 )
             )
 

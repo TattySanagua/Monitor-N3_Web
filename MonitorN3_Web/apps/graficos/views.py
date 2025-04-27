@@ -12,17 +12,17 @@ from ..precipitacion.models import Precipitacion
 
 GRAFICOS_PREDEFINIDOS = {
     "fecha_nivel_embalse": "Cronológico - Nivel Embalse",
-    "fecha_nivel_piezometrico_pc1_7": "Cronológico (PC1-2-3-4-5-6-7)",
-    "fecha_nivel_piezometrico_pc1_5_6": "Cronológico (PC1-5-6)",
-    "fecha_nivel_piezometrico_f1_pc2_3_4": "Cronológico (F1-PC2-3-4)",
-    "nivel_embalse_nivel_piezometrico_pc1_5_6": "Nivel Embalse - Nivel Piezométrico (PC1-5-6)",
-    "nivel_embalse_nivel_piezometrico_f1_pc2_3_4": "Nivel Embalse - Nivel Piezométrico (L3-PC4)",
-    "nivel_embalse_nivel_freatico_f1": "Nivel Embalse - Nivel Freático (F1)",
-    "nivel_embalse_caudal_afo3_tot": "Nivel Embalse - Caudal (AFo3-TOT)",
-    "nivel_embalse_caudal_afo3_ei": "Nivel Embalse - Caudal (AFo3-EI)",
-    "nivel_embalse_caudal_afo3_pp": "Nivel Embalse - Caudal (AFo3-PP)",
-    "fecha_nivel_embalse_caudal_afo3_tot": "Cronológico - Nivel Embalse - Caudal (AFo3-TOT)",
-    "fecha_nivel_embalse_caudal_afo3_pp": "Cronológico - Nivel Embalse - Caudal (AFo3-PP)",
+    "fecha_nivel_piezometrico_pc1_7": "Cronológico  PC1-2-3-4-5-6-7",
+    "fecha_nivel_piezometrico_pc1_5_6": "Cronológico  PC1-5-6",
+    "fecha_nivel_piezometrico_f1_pc2_3_4": "Cronológico  F1-PC2-3-4",
+    "nivel_embalse_nivel_piezometrico_pc1_5_6": "Nivel Embalse - Nivel Piezométrico  PC1-5-6",
+    "nivel_embalse_nivel_piezometrico_pc4": "Nivel Embalse - Nivel Piezométrico  L3-PC4 (Con Umbrales) ",
+    "nivel_embalse_nivel_freatico_f1": "Nivel Embalse - Nivel Freático  L3-F1",
+    "nivel_embalse_caudal_afo3_tot": "Nivel Embalse - Caudal  AFO3-TOT (Con Umbrales)",
+    "nivel_embalse_caudal_afo3_ei": "Nivel Embalse - Caudal  AFO3-EI",
+    "nivel_embalse_caudal_afo3_pp": "Nivel Embalse - Caudal  AFO3-PP",
+    "fecha_nivel_embalse_caudal_afo3_tot": "Cronológico - Nivel Embalse - Caudal  AFO3-TOT",
+    "fecha_nivel_embalse_caudal_afo3_pp": "Cronológico - Nivel Embalse - Caudal  AFO3-PP",
 }
 
 @login_required(login_url='/login/')
@@ -236,7 +236,7 @@ def generar_grafico_predefinido(request):
                 height=700
             )
 
-        elif seleccion == "nivel_embalse_nivel_piezometrico_f1_pc2_3_4":
+        elif seleccion == "nivel_embalse_nivel_piezometrico_pc4":
             piezometros = ["L3-PC4"]
             embalse_data = Embalse.objects.all().values("fecha", "nivel_embalse")
             piezometro_data = Medicion.objects.filter(id_instrumento__nombre__in=piezometros).values("fecha", "valor",
@@ -272,7 +272,7 @@ def generar_grafico_predefinido(request):
             min_nivel_embalse = df_final["nivel_embalse"].min()
             max_nivel_embalse = df_final["nivel_embalse"].max()
 
-            extend_range = 5  # Extender 5 unidades hacia la derecha
+            extend_range = 2
             max_extendido = max_nivel_embalse + extend_range
 
             nivel_embalse_line = list(range(int(min_nivel_embalse), int(max_extendido) + 1))
@@ -364,10 +364,65 @@ def generar_grafico_predefinido(request):
                             marker=dict(symbol="circle", size=8)
                         )
                     )
+
+                #Curvas de umbral
+                min_nivel_embalse = df_final["nivel_embalse"].min()
+                max_nivel_embalse = df_final["nivel_embalse"].max()
+                extend_range = 1
+                max_extendido = max_nivel_embalse + extend_range
+
+                nivel_embalse_line = list(range(int(min_nivel_embalse), int(max_extendido) + 1))
+
+                # Curva de Caudal Esperado
+                caudal_esperado = [
+                    0.0833 * ((ne - 600) ** 2) - (ne - 600) * 0.1489 + 0.5122 if ne >= 602 else None
+                    for ne in nivel_embalse_line
+                ]
+
+                # Curva de Caudal Mínimo
+                caudal_minimo = [
+                    0.121011659352924 * (ne ** 2) - 144.943385942074 * ne + 43401.8913621173 if ne >= 602 else None
+                    for ne in nivel_embalse_line
+                ]
+
+                #Curva de Caudal Óptimo
+                caudal_optimo = [0 if ne >= 602 else None for ne in nivel_embalse_line]
+
+            fig.add_trace(
+                go.Scatter(
+                    x=nivel_embalse_line,
+                    y=caudal_minimo,
+                    mode='lines',
+                    name='Caudal Mínimo',
+                    line=dict(color='blue', width=2.5),
+                    hoverinfo='x+y'
+                )
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=nivel_embalse_line,
+                    y=caudal_esperado,
+                    mode='lines',
+                    name='Caudal Esperado',
+                    line=dict(color='red', width=2.5),
+                    hoverinfo='x+y'
+                )
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=nivel_embalse_line,
+                    y=caudal_optimo,
+                    mode='lines',
+                    name='Caudal Óptimo',
+                    line=dict(color='green', width=2.5, dash='dash'),
+                    hoverinfo='x+y'
+                )
+            )
+
             fig.update_layout(
-                title="Nivel Embalse - Caudal (AFo3-TOT)",
+                title="Nivel Embalse - Caudal AFo3-TOT (Con Umbrales)",
                 xaxis_title="Nivel Embalse (msnm)",
-                yaxis_title="Caudal (m³/s)",
+                yaxis_title="Caudal (l/s)",
                 legend_title="Aforador (Año)",
                 height=700
             )
@@ -491,7 +546,7 @@ def generar_grafico_predefinido(request):
                 title="Fecha - Nivel Embalse - Caudal (AFo3-TOT)",
                 xaxis_title="Fecha",
                 yaxis=dict(title="Nivel Embalse (msnm)", side="left", showgrid=True),
-                yaxis2=dict(title="Caudal (m³/s)", overlaying="y", side="right", showgrid=True),
+                yaxis2=dict(title="Caudal (l/s)", overlaying="y", side="right", showgrid=True),
                 height=700,
                 xaxis=dict(
                     rangeselector=dict(
@@ -744,12 +799,6 @@ def generar_grafico(request):
 
         df_destacado = df_final[df_final["destacado"]]
 
-        color_normal = "#377BEF"
-        color_destacado = "#EF6376"
-        color_secundario = "#87C19B"
-
-        print("df_destacado:", df_destacado.head(20))
-
         #Generar el gráfico
         fig = go.Figure()
 
@@ -758,7 +807,7 @@ def generar_grafico(request):
             "nivel_embalse": "Nivel Embalse [msnm]",
             "nivel_piezometrico": "Nivel Piezométrico [msnm]",
             "nivel_freatico": "Nivel Freático [msnm]",
-            "caudal": "Caudal [l/s - m³/s]",
+            "caudal": "Caudal [l/s]",
             "precipitacion": "Precipitación [mm]"
         }
 

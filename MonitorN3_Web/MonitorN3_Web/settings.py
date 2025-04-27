@@ -14,9 +14,9 @@ SECRET_KEY = 'django-insecure-h5pva^)8$^kr+p0ge2jelo6^du^&^8=yaowhqjxuo=am-dk4yh
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['.ngrok-free.app', '127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['monitor-n3.ngrok.app', '127.0.0.1', 'localhost']
 
-CSRF_TRUSTED_ORIGINS = ['https://*.ngrok-free.app']
+CSRF_TRUSTED_ORIGINS = ['https://monitor-n3.ngrok.app']
 
 # Application definition
 
@@ -74,7 +74,7 @@ WSGI_APPLICATION = 'MonitorN3_Web.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": "pruebas_monitor",
+        "NAME": "monitor_n3_web",
         "USER": "root",
         "PASSWORD": "root",
         "HOST": "127.0.0.1",

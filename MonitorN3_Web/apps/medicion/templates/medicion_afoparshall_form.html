@@ -31,7 +31,7 @@
         </div>
 
         <div class="form-group mt-3">
-            <label for="lectura_ha" class="form-label">Lectura de ha [cm]:</label>
+            <label for="lectura_ha" class="form-label">Lectura de ha (cm):</label>
             <input type="number" step="0.001" min="0" id="lectura_ha" name="lectura_ha" class="form-control" required>
         </div>
 
@@ -84,7 +84,6 @@
 </div>
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    console.log("✅ Script cargado correctamente");
 
     let form = document.getElementById("aforador-parshall-form");
 
@@ -101,10 +100,8 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
-    // ✅ ENVÍO DEL FORMULARIO COMPLETO (BOTÓN GUARDAR)
     form.addEventListener("submit", function(event) {
         event.preventDefault();
-        console.log("📤 Enviando datos...");
 
         let formData = new FormData(this);
 
@@ -117,7 +114,6 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .then(response => response.json())
         .then(data => {
-            console.log("📥 Respuesta recibida:", data);
 
             let toastElement = document.getElementById("toast");
             let toastMessage = document.getElementById("toast-message");
@@ -126,20 +122,17 @@ document.addEventListener("DOMContentLoaded", function() {
             if (data.success) {
                 toastElement.classList.remove("bg-danger");
                 toastElement.classList.add("bg-success");
+                toastMessage.innerText = data.message;
+                toastContainer.show();
                 form.reset();
                 document.getElementById("resultado-caudal").style.display = "none";
             } else {
-                toastElement.classList.remove("bg-success");
-                toastElement.classList.add("bg-danger");
+                mostrarErrorToast(data.message); // Usar la función para mostrar el error como toast
             }
-
-            toastMessage.innerText = data.message;
-            toastContainer.show();
         })
         .catch(error => console.error("❌ Error en la solicitud:", error));
     });
 
-    // ✅ BLOQUE NUEVO: BOTÓN "CALCULAR"
     const calcularBtn = document.getElementById("calcular-caudal");
     const lecturaInput = document.getElementById("lectura_ha");
     const instrumentoSelect = document.getElementById("id_id_instrumento");
@@ -149,7 +142,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const idInstrumento = instrumentoSelect.value;
 
         if (!idInstrumento || isNaN(lectura)) {
-            alert("Por favor complete todos los campos correctamente.");
+            mostrarErrorToast("Por favor complete todos los campos correctamente."); // Mostrar como toast
             return;
         }
 
@@ -169,20 +162,27 @@ document.addEventListener("DOMContentLoaded", function() {
         .then(data => {
             if (data.caudal !== undefined) {
                 const caudalRedondeado = Math.round(data.caudal * 100) / 100;
-
-    // Muestra sin ceros innecesarios
-    document.getElementById("caudal").textContent = caudalRedondeado;
-
-    // Guarda como número real en el input oculto
-    document.getElementById("caudal_calculado").value = caudalRedondeado;
-
-    document.getElementById("resultado-caudal").style.display = "block";
+                document.getElementById("caudal").textContent = caudalRedondeado;
+                document.getElementById("caudal_calculado").value = caudalRedondeado;
+                document.getElementById("resultado-caudal").style.display = "block";
             } else if (data.error) {
-                alert("Error: " + data.error);
+                mostrarErrorToast("Error: " + data.error); // Mostrar el error del servidor como toast
             }
         })
         .catch(error => console.error("❌ Error al calcular caudal:", error));
     });
 });
+
+function mostrarErrorToast(mensaje) {
+    const toastElement = document.getElementById("toast");
+    const toastMessage = document.getElementById("toast-message");
+    const toastContainer = new bootstrap.Toast(toastElement);
+
+    toastElement.classList.remove("bg-success");
+    toastElement.classList.add("bg-danger");
+    toastMessage.innerText = mensaje;
+    toastContainer.show();
+}
+</script>
 </script>
 {% endblock %}

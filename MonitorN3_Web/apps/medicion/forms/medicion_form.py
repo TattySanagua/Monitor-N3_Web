@@ -10,7 +10,7 @@ class MedicionPiezometroForm(ModelForm):
         label= 'Seleccionar Piezómetro',
         widget=forms.Select(attrs={'class': 'form-control'})
     )
-    lectura = forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'min': '0'})
+    lectura = forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001'})
 
     class Meta:
         model = Medicion
@@ -29,7 +29,7 @@ class MedicionUpdateForm(forms.ModelForm):
         }
         labels = {
             'fecha': 'Fecha de la medición',
-            'valor': 'Valor',
+            'valor': 'Valor (msnm)',
         }
 
 class MedicionFreatimetroForm(ModelForm):

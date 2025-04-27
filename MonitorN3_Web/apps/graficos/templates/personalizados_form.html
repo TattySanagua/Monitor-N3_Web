@@ -1,7 +1,5 @@
 {% extends 'base.html' %}
-
 {% block title %}Gráficos Personalizados{% endblock %}
-
 {% block content %}
 <div class="container mt-4">
     <h2 class="text-center">Gráfico Personalizado</h2>
@@ -92,6 +90,9 @@
                 </div>
     </form>
     </div>
+    <div id="loading-message" style="display:none; text-align:center; margin-top: 20px;">
+        <p style="font-size: 18px; color: #b5e1f8;">⏳ Generando gráfico, espere un momento...</p>
+    </div>
     <div id="grafico-container" class="mt-5"></div>
 </div>
 
@@ -177,6 +178,9 @@ document.addEventListener("DOMContentLoaded", function() {
     document.getElementById("form-grafico").addEventListener("submit", function(event) {
         event.preventDefault();
 
+        document.getElementById("loading-message").style.display = "block";
+        document.getElementById("grafico-container").innerHTML = "";
+
         let formData = new FormData(this);
         let data = {};
 
@@ -207,6 +211,7 @@ document.addEventListener("DOMContentLoaded", function() {
             return response.json();
         })
             .then(data => {
+            document.getElementById("loading-message").style.display = "none";
             if (data.grafico) {
                 const graficoContainer = document.getElementById("grafico-container");
                 graficoContainer.innerHTML = data.grafico;

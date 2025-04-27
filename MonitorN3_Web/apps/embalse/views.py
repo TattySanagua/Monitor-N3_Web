@@ -1,7 +1,9 @@
 import pandas as pd
+from django.urls import reverse
+from django.utils import timezone
 from reportlab.lib import colors
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404, redirect
 from datetime import datetime
 from django.db.models import Sum
 from django.http import JsonResponse
@@ -10,8 +12,12 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from . forms.embalse_form import EmbalseForm
 from . models import Embalse
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from ..precipitacion.models import Precipitacion
+from ..precipitacion.forms.precipitacion_form import PrecipitacionForm
+
+def user_is_admin(user):
+    return user.is_authenticated and not user.groups.filter(name__in=["Invitado", "Técnico"]).exists()
 
 @login_required(login_url='/login/')
 def embalse_form(request):
@@ -38,6 +44,15 @@ def nivelembalse(request):
     if request.method == "POST":
         embalse_form = EmbalseForm(request.POST)
         if embalse_form.is_valid():
+            fecha = embalse_form.cleaned_data['fecha']
+            hoy = timezone.now().date()
+
+            if fecha > hoy:
+                return JsonResponse({
+                    "success": False,
+                    "message": "⚠️ No se pueden registrar niveles de embalse con fecha futura."
+                })
+
             embalse_form.save()
             return JsonResponse({"success": True, "message": "✅ Nivel de embalse guardado correctamente."})
         else:
@@ -57,11 +72,17 @@ def embalse_precipitacion_tabla(request):
     if fecha_fin:
         fecha_fin = datetime.strptime(fecha_fin, "%Y-%m-%d").date()
 
-    embalses = Embalse.objects.values('fecha', 'nivel_embalse')
-    embalse_dict = {e['fecha']: e['nivel_embalse'] for e in embalses}
+    embalses = Embalse.objects.all()
+    embalse_dict = {e.fecha: {"nivel": e.nivel_embalse, "id": e.id} for e in embalses}
 
     precipitaciones = Precipitacion.objects.values('fecha').annotate(total=Sum('valor'))
-    precipitacion_dict = {p['fecha']: p['total'] for p in precipitaciones}
+    precipitacion_ids = {
+        p['fecha']: Precipitacion.objects.filter(fecha=p['fecha']).first().id
+        for p in precipitaciones
+    }
+
+    precipitacion_dict = {p['fecha']: {"total": p['total'], "id": precipitacion_ids.get(p['fecha'])} for p in
+                          precipitaciones}
 
     todas_las_fechas = sorted(set(embalse_dict.keys()) | set(precipitacion_dict.keys()), reverse=True)
 
@@ -72,8 +93,10 @@ def embalse_precipitacion_tabla(request):
     for fecha in todas_las_fechas:
         datos_tabla.append({
             "fecha": fecha.strftime("%d-%m-%Y"),
-            "nivel_embalse": embalse_dict.get(fecha, "-"),
-            "precipitaciones": precipitacion_dict.get(fecha, "-"),
+            "nivel_embalse": embalse_dict.get(fecha, {}).get("nivel", "-"),
+            "embalse_id": embalse_dict.get(fecha, {}).get("id", ""),
+            "precipitaciones": precipitacion_dict.get(fecha, {}).get("total", "-"),
+            "precipitacion_id": precipitacion_dict.get(fecha, {}).get("id", ""),
         })
 
     contexto = {
@@ -83,6 +106,71 @@ def embalse_precipitacion_tabla(request):
     }
 
     return render(request, "embalse_precipitacion_tabla.html", contexto)
+
+@login_required(login_url='/login/')
+@user_passes_test(user_is_admin, login_url='/login/')
+def editar_embalse(request, pk):
+    embalse = get_object_or_404(Embalse, pk=pk)
+
+    if request.method == 'POST':
+        form = EmbalseForm(request.POST, instance=embalse)
+        if form.is_valid():
+            fecha = form.cleaned_data['fecha']
+            hoy = timezone.now().date()
+
+            if fecha > hoy:
+                return JsonResponse({
+                    'success': False,
+                    'message': '⚠️ No se puede asignar una fecha futura al nivel de embalse.'
+                })
+            form.save()
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': '✅ Cambios guardados correctamente.',
+                    'redirect_url': reverse('embalse_precipitacion_tabla')
+                })
+            return redirect('embalse_precipitacion_tabla')
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': '❌ Error al guardar el formulario.'})
+    else:
+        form = EmbalseForm(instance=embalse)
+
+    return render(request, 'editar_embalse_form.html', {'form': form})
+
+@login_required(login_url='/login/')
+@user_passes_test(user_is_admin, login_url='/login/')
+def editar_precipitacion(request, pk):
+    precipitacion = get_object_or_404(Precipitacion, pk=pk)
+
+    if request.method == 'POST':
+        form = PrecipitacionForm(request.POST, instance=precipitacion)
+        if form.is_valid():
+            fecha = form.cleaned_data['fecha']
+            hoy = timezone.now().date()
+
+            if fecha > hoy:
+                return JsonResponse({
+                    'success': False,
+                    'message': '⚠️ No se puede asignar una fecha futura a la precipitación.'
+                })
+
+            form.save()
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({
+                    'success': True,
+                    'message': '✅ Cambios guardados correctamente.',
+                    'redirect_url': reverse('embalse_precipitacion_tabla')
+                })
+            return redirect('embalse_precipitacion_tabla')
+        else:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'message': '❌ Error al guardar el formulario.'})
+    else:
+        form = PrecipitacionForm(instance=precipitacion)
+
+    return render(request, 'editar_precipitacion_form.html', {'form': form})
 
 @login_required(login_url='/login/')
 def export_embalse_excel(request):

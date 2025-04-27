@@ -4,31 +4,68 @@
 <div class="form-container" style="color:black; max-width: 600px;background: rgba(255, 255, 255, 0.70);box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
 <form method="post" class="d-flex flex-column align-items-center ">
   {% csrf_token %}
-  <div class="col-md-auto m-3">
-    <label for="instrumento" class="form-label">Seleccione un Instrumento:</label>
-    <select name="instrumento" id="instrumento" class="form-control">
-      {% for instrumento in instrumentos_activos %}
-        <option value="{{ instrumento.nombre }}" {% if instrumento.nombre == instrumento_seleccionado %}selected{% endif %}>
-          {{ instrumento.nombre }}
-        </option>
-      {% endfor %}
-    </select>
-  </div>
+  <div class="col-md-auto m-3" style="max-width:500px;">
+    <div class="form-group row align-items-center">
+        <div class="col-sm-8">
+            <label for="instrumento" class="col-form-label">Seleccione Instrumento:</label>
+        </div>
+        <div class="col-sm-4">
+            <select name="instrumento" id="instrumento" class="form-control">
+                {% for instrumento in instrumentos_activos %}
+                    <option value="{{ instrumento.nombre }}" {% if instrumento.nombre == instrumento_seleccionado %}selected{% endif %}>
+                        {{ instrumento.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+</div>
   <br>
   <h5>Constantes de Cálculo</h5>
-<div class="d-flex justify-content-center gap-3 flex-wrap mb-3">
-  <div class="form-group text-center">
-    <label for="C12">C12:</label>
-    <input type="number" name="C12" id="C12" class="form-control" step="0.01" min="0" required style="width: 100px;">
+  <div class="col-md-auto m-3 text-center" style="max-width:400px;">
+    <div class="form-group row align-items-center">
+      <div class="col-sm-3">
+        <label for="C12">C12:</label>
+      </div>
+      <div class="col-sm-9">
+        <input type="number" name="C12" id="C12" class="form-control" step="0.01" min="0" required >
+      </div>
+      <div class="col-12">
+        <small class="form-text text-muted">
+          Indica el año de inicio de la tendencia exponencial, tomando como referencia el año 1900. Por ejemplo, para el año 1973 ingrese '73', y para el año 2001 ingrese '101'.
+        </small>
+      </div>
+    </div>
   </div>
-  <div class="form-group text-center">
-    <label for="C13">C13:</label>
-    <input type="number" name="C13" id="C13" class="form-control" step="0.01" min="0" required style="width: 100px;">
+  <div class="col-md-auto m-3 text-center" style="max-width:400px;">
+    <div class="form-group row align-items-center">
+      <div class="col-sm-3">
+        <label for="C13">C13:</label>
+      </div>
+      <div class="col-sm-9">
+        <input type="number" name="C13" id="C13" class="form-control" step="0.01" min="0" required>
+      </div>
+      <div class="col-12">
+        <small class="form-text text-muted">
+          Especifica la duración en años que se estima para el desarrollo de la tendencia exponencial. Por ejemplo, si la tendencia desde 1973 dura hasta el año 2000, ingrese '27'.
+        </small>
+      </div>
+    </div>
   </div>
-  <div class="form-group text-center">
-    <label for="C14">C14:</label>
-    <input type="number" name="C14" id="C14" class="form-control" step="0.01" min="0" required style="width: 100px;">
-  </div>
+  <div class="col-md-auto m-3 text-center" style="max-width:400px;">
+    <div class="form-group row align-items-center">
+      <div class="col-sm-3">
+        <label for="C14">C14:</label>
+      </div>
+      <div class="col-sm-9">
+        <input type="number" name="C14" id="C14" class="form-control" step="0.01" min="0" required>
+      </div>
+      <div class="col-12">
+        <small class="form-text text-muted">
+          Define la dependencia de las mediciones. Ingrese '1' si las mediciones dependen del nivel del embalse, y '0' si dependen del nivel de restitución.
+        </small>
+      </div>
+    </div>
 </div>
   <br>
   <h5>Ingrese Niveles de Embalse Supuestos para la predicción</h5>
@@ -142,7 +179,7 @@
           <tr>
             <td>{{ dato.fecha|date:"d-m-Y" }}</td>
             <td>{{ dato.nivel_embalse|default:"Sin dato" }}</td>
-            <td>{{ dato.valor|default:"-" }}</td>
+            <td>{{ dato.valor }}</td>
             <td>{% if dato.yc is None %}-{% else %}{{ dato.yc|floatformat:2 }}{% endif %}</td>
             <td>{% if dato.error is None %}-{% else %}{{ dato.error|floatformat:2 }}{% endif %}</td>
           </tr>
@@ -151,10 +188,18 @@
     </table>
 
   {% elif error %}
-    <p>{{ error }}</p>
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
+  <div class="toast align-items-center text-bg-warning border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="d-flex">
+      <div class="toast-body">
+        {{ error }}
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+    </div>
+  </div>
+</div>
   {% endif %}
 </div>
-
 
 <script>
 function agregarFila() {
