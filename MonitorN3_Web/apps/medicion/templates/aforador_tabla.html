@@ -26,42 +26,28 @@
             <tr>
                 <th>Fecha</th>
                 <th>Nivel Embalse</th>
-                <th colspan="{{ nombres_aforadores|length }}">Instrumento - Caudal [l/s]</th>
+                {% for nombre in nombres_aforadores %}
+                    {% if mostrar_edicion_columnas %}
+                        <th colspan="2">{{ nombre }}</th>
+                    {% else %}
+                        <th>{{ nombre }}</th>
+                    {% endif %}
+                {% endfor %}
             </tr>
             <tr>
                 <th>dd-mm-YYYY</th>
                 <th>[msnm]</th>
                 {% for nombre in nombres_aforadores %}
-                <th>{{ nombre }}</th>
+                    <th>Valor</th>
+                    {% if mostrar_edicion_columnas %}
+                        <th>Editar</th>
+                    {% endif %}
                 {% endfor %}
             </tr>
             </thead>
 
             <tbody>
-            {% for fila in filas_tabla %}
-            <tr>
-                <td>{{ fila.fecha }}</td>
-                <td>{{ fila.nivel_embalse }}</td>
-                {% for valor in fila.valores %}
-                    <td>
-                        {% if valor != "-" %}
-                            {{ valor.valor }}
-                            {% if request.user.groups.all.0.name != "Invitado" and request.user.groups.all.0.name != "Técnico" %}
-                                <a href="{% url 'editar_medicion' id=valor.id %}" class="ms-1 text-muted" style="font-size:0.65rem;">
-                                    <i class="fas fa-pen" style="color:#bcbcbc;"></i>
-                                </a>
-                            {% endif %}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
-                {% endfor %}
-            </tr>
-        {% empty %}
-            <tr>
-                <td colspan="{{ nombres_aforadores|length|add:2 }}" class="text-center">No hay mediciones registradas.</td>
-            </tr>
-        {% endfor %}
+            {{ filas_html|safe }}
             </tbody>
         </table>
     </div>

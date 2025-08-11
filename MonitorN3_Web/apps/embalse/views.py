@@ -15,11 +15,11 @@ from . models import Embalse
 from django.contrib.auth.decorators import login_required, user_passes_test
 from ..precipitacion.models import Precipitacion
 from ..precipitacion.forms.precipitacion_form import PrecipitacionForm
+from MonitorN3_Web.decorators import admin_o_tecnico, solo_admin
 
-def user_is_admin(user):
-    return user.is_authenticated and not user.groups.filter(name__in=["Invitado", "Técnico"]).exists()
 
 @login_required(login_url='/login/')
+@admin_o_tecnico
 def embalse_form(request):
     embalse_form = EmbalseForm()
     return render(request, 'embalse_form.html',  {'embalse_form': embalse_form})
@@ -40,6 +40,7 @@ def obtener_datos_embalse():
     return df_final
 
 @login_required(login_url='/login/')
+@admin_o_tecnico
 def nivelembalse(request):
     if request.method == "POST":
         embalse_form = EmbalseForm(request.POST)
@@ -108,7 +109,7 @@ def embalse_precipitacion_tabla(request):
     return render(request, "embalse_precipitacion_tabla.html", contexto)
 
 @login_required(login_url='/login/')
-@user_passes_test(user_is_admin, login_url='/login/')
+@solo_admin
 def editar_embalse(request, pk):
     embalse = get_object_or_404(Embalse, pk=pk)
 
@@ -140,7 +141,7 @@ def editar_embalse(request, pk):
     return render(request, 'editar_embalse_form.html', {'form': form})
 
 @login_required(login_url='/login/')
-@user_passes_test(user_is_admin, login_url='/login/')
+@solo_admin
 def editar_precipitacion(request, pk):
     precipitacion = get_object_or_404(Precipitacion, pk=pk)
 

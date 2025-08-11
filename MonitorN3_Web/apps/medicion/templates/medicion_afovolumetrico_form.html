@@ -3,9 +3,10 @@
 {% block body_id %}volumetrico-page{% endblock %}
 {% block content %}
 <header class="text-center my-4">
-    <h1>Caudal - Aforador Volumétrico</h1>
+    <h1>Calcular - Registrar Caudal</h1>
+    <h2>AFORADOR VOLUMÉTRICO</h2>
 </header>
-<br>
+
 
 <div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1050">
     <div id="toast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
@@ -16,7 +17,7 @@
     </div>
 </div>
 <div class="form-container" style="color:black; background: rgba(255, 255, 255, 0.70);box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
-    <form method="POST" id="aforador-volumetrico-form" action="{% url 'afovolumetrico_guardar' %}">
+    <form method="POST" id="aforador-volumetrico-form" action="{% url 'afovolumetrico_guardar' %}" novalidate>
         {% csrf_token %}
         <div class="form-group">
             {{ medicion_afovolumetrico_form.fecha.label_tag }}
@@ -74,14 +75,22 @@
                     }
                 </style>
         </div>
-        <div id="resultado-caudales" class="mt-4" style="display:none;color:black; background: rgba(255, 255, 255, 0.10);box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
+        <div id="resultado-caudales" class="mt-4 oculto" style="color:black; background: rgba(255, 255, 255, 0.10);box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
             <h5><b>Caudal 1 = </b><span id="caudal-1"></span> l/s</h5>
             <h5><b>Caudal 2 = </b><span id="caudal-2"></span> l/s</h5>
             <h5><b>Caudal 3 = </b><span id="caudal-3"></span> l/s</h5>
             <br>
             <h4><b>Caudal Promedio: </b><span id="caudal-promedio"></span> l/s</h4>
             <input type="hidden" name="q_promedio" id="q_promedio">
+            <style>
+                #resultado-caudales {display: none;}
+            </style>
         </div>
+        <style>
+            .oculto {
+                    display: none !important;
+            }
+        </style>
          <br>
         <div style="text-align: center; ">
                 <button type="submit" class="boton">Guardar</button>
@@ -107,7 +116,6 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-
     let form = document.getElementById("aforador-volumetrico-form");
     if (!form) {
         console.error("❌ No se encontró el formulario");
@@ -122,7 +130,57 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
+    function mostrarErroresDesdeJson(errorData) {
+        let readableError = "";
+        const yaMostrados = new Set();
+
+        // Mensajes generales
+        if (errorData.__all__ && Array.isArray(errorData.__all__)) {
+            errorData.__all__.forEach(msg => {
+                if (!yaMostrados.has(msg)) {
+                    readableError += msg + "\n";
+                    yaMostrados.add(msg);
+                }
+            });
+        }
+
+        // Por campo
+        for (const field in errorData) {
+            if (field === "__all__") continue;
+
+            if (Array.isArray(errorData[field]) && errorData[field].length > 0) {
+                const label = document.querySelector(`label[for="id_${field}"]`);
+                const labelText = label ? label.textContent.replace(/[*:\s]+$/, '') : field;
+
+                errorData[field].forEach(msg => {
+                    if (!yaMostrados.has(msg)) {
+                        readableError += `${labelText}: ${msg}\n`;
+                        yaMostrados.add(msg);
+                    }
+                });
+            }
+        }
+
+        if (!readableError.trim()) {
+            readableError = "Por favor, complete correctamente los campos.";
+        }
+
+        return readableError.trim();
+    }
+
+    function mostrarErrorToast(mensaje) {
+        const toastElement = document.getElementById("toast");
+        const toastMessage = document.getElementById("toast-message");
+        const toastContainer = new bootstrap.Toast(toastElement);
+
+        toastElement.classList.remove("bg-success");
+        toastElement.classList.add("bg-danger");
+        toastMessage.innerText = "❌ Error:\n" + mensaje;
+        toastContainer.show();
+    }
+
     document.getElementById("calcular-caudal").addEventListener("click", function () {
+        document.getElementById("resultado-caudales").classList.add("oculto");
         let formData = new FormData(form);
 
         fetch("{% url 'afovolumetrico_calcular' %}", {
@@ -134,37 +192,11 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .then(response => response.json())
         .then(data => {
-            let toastElement = document.getElementById("toast");
-            let toastMessage = document.getElementById("toast-message");
-            let toastContainer = new bootstrap.Toast(toastElement);
-
             if (data.error) {
-                toastElement.classList.remove("bg-success");
-                toastElement.classList.add("bg-danger");
-
-                try {
-                    const errorData = data.error;
-                    let readableError = "";
-                    if (errorData.__all__ && Array.isArray(errorData.__all__)) {
-                        readableError = errorData.__all__.join("\n");
-                    } else {
-                        for (const field in errorData) {
-                            if (Array.isArray(errorData[field]) && errorData[field].length > 0) {
-                                readableError += `${document.querySelector(`label[for="id_${field}"]`)?.textContent || field} no es válido.\n`;
-                                readableError += errorData[field].join("\n");
-                                break;
-                            }
-                        }
-                    }
-                    toastMessage.innerText = "❌ Error:\n" + readableError;
-                } catch (e) {
-                    console.error("Error al parsear el JSON de errores:", e);
-                    toastMessage.innerText = "❌ Error: Ocurrió un problema con los datos.";
-                }
-                toastContainer.show();
-                document.getElementById("resultado-caudales").style.display = "none";
+                mostrarErrorToast(mostrarErroresDesdeJson(data.error || {}));
+                document.getElementById("resultado-caudales").classList.add("oculto");
             } else {
-                document.getElementById("resultado-caudales").style.display = "block";
+                document.getElementById("resultado-caudales").classList.remove("oculto");
                 document.getElementById("caudal-1").textContent = data.q1;
                 document.getElementById("caudal-2").textContent = data.q2;
                 document.getElementById("caudal-3").textContent = data.q3;
@@ -190,11 +222,9 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .then(response => response.json())
         .then(data => {
-            console.log("📥 Respuesta de guardado:", data);
-
-            let toastElement = document.getElementById("toast");
-            let toastMessage = document.getElementById("toast-message");
-            let toastContainer = new bootstrap.Toast(toastElement);
+            const toastElement = document.getElementById("toast");
+            const toastMessage = document.getElementById("toast-message");
+            const toastContainer = new bootstrap.Toast(toastElement);
 
             if (data.success) {
                 toastElement.classList.remove("bg-danger");
@@ -211,19 +241,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     const isJSON = data.message.trim().startsWith("{") || data.message.trim().startsWith("[");
                     if (isJSON) {
                         const errorData = JSON.parse(data.message);
-                        let readableError = "";
-                        if (errorData.__all__ && Array.isArray(errorData.__all__)) {
-                            readableError = errorData.__all__.join("\n");
-                        } else {
-                            for (const field in errorData) {
-                                if (Array.isArray(errorData[field]) && errorData[field].length > 0) {
-                                    readableError += `${document.querySelector(`label[for="id_${field}"]`)?.textContent || field} no es válido.\n`;
-                                    readableError += errorData[field].join("\n");
-                                    break;
-                                }
-                            }
-                        }
-                        toastMessage.innerText = "❌ Error:\n" + readableError;
+                        toastMessage.innerText = "❌ Error:\n" + mostrarErroresDesdeJson(errorData);
                     } else {
                         toastMessage.innerText = "❌ Error:\n" + data.message;
                     }
@@ -231,22 +249,12 @@ document.addEventListener("DOMContentLoaded", function() {
                     console.error("Error al manejar el mensaje de error:", e);
                     toastMessage.innerText = "❌ Error: Ocurrió un problema con los datos.";
                 }
+
                 toastContainer.show();
             }
         })
         .catch(error => console.error("❌ Error en la solicitud de guardado:", error));
     });
 });
-
-function mostrarErrorToast(mensaje) {
-    const toastElement = document.getElementById("toast");
-    const toastMessage = document.getElementById("toast-message");
-    const toastContainer = new bootstrap.Toast(toastElement);
-
-    toastElement.classList.remove("bg-success");
-    toastElement.classList.add("bg-danger");
-    toastMessage.innerText = mensaje;
-    toastContainer.show();
-}
 </script>
 {% endblock %}

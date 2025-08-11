@@ -13,40 +13,63 @@ from reportlab.platypus import Table, TableStyle
 from reportlab.lib import colors
 from django.shortcuts import render
 from django.http import HttpResponse
-
-def user_is_admin(user):
-    return user.is_authenticated and not user.groups.filter(name__in=["Invitado", "Técnico"]).exists()
+from MonitorN3_Web.decorators import admin_o_tecnico, solo_admin
 
 @login_required(login_url='/login/')
-@user_passes_test(user_is_admin, login_url='/login/')
+@solo_admin
 def crear_instrumento(request):
     if request.method == 'POST':
         instrumento_form = InstrumentoForm(request.POST)
 
         if instrumento_form.is_valid():
-            instrumento = instrumento_form.save(commit=False)
-
-            if not instrumento.fecha_alta:
-                instrumento.fecha_alta = now()
-            instrumento.save()
-
             tipo_id = request.POST.get('id_tipo')
             tipo = Tipo.objects.get(id=tipo_id)
+            tipo_nombre = tipo.nombre_tipo
+
+            errores_parametros = []
+
+            fecha_alta = instrumento_form.cleaned_data.get('fecha_alta')
+            if fecha_alta and fecha_alta > now().date():
+                return JsonResponse({
+                    "success": False,
+                    "message": "❌ La fecha de alta no puede ser futura."
+                }, status=400)
+
+            if tipo_nombre in ["PIEZÓMETRO", "FREATÍMETRO"]:
+                for campo in ['cb', 'ci', 'angulo']:
+                    valor = request.POST.get(campo)
+                    if valor is None or valor.strip() == "":
+                        errores_parametros.append(f"⚠️ Complete los campos faltantes")
+
+            elif tipo_nombre == "AFORADOR PARSHALL":
+                for campo in ['k', 'u']:
+                    valor = request.POST.get(campo)
+                    if valor is None or valor.strip() == "":
+                        errores_parametros.append(f"⚠️ Complete los campos faltantes")
+
+            if errores_parametros:
+                return JsonResponse({
+                    "success": False,
+                    "message": " ".join(errores_parametros)
+                }, status=400)
+
+            instrumento = instrumento_form.save(commit=False)
+            if not instrumento.fecha_alta:
+                instrumento.fecha_alta = now()
+
             instrumento.id_tipo = tipo
             instrumento.save()
 
-            tipo_nombre = tipo.nombre_tipo
-
             if tipo_nombre in ["PIEZÓMETRO", "FREATÍMETRO"]:
                 parametros = [
-                    {"nombre_parametro": "cb", "valor": Decimal(request.POST.get("cb", "0"))},
-                    {"nombre_parametro": "ci", "valor": Decimal(request.POST.get("ci", "0"))},
-                    {"nombre_parametro": "angulo", "valor": Decimal(request.POST.get("angulo", "0"))},
+                    {"nombre_parametro": "cb", "valor": Decimal(request.POST.get("cb"))},
+                    {"nombre_parametro": "ci", "valor": Decimal(request.POST.get("ci"))},
+                    {"nombre_parametro": "angulo", "valor": Decimal(request.POST.get("angulo"))},
                 ]
             elif tipo_nombre == "AFORADOR PARSHALL":
                 parametros = [
-                    {"nombre_parametro": "k", "valor": Decimal(request.POST.get("k", "0"))},
-                    {"nombre_parametro": "u", "valor": Decimal(request.POST.get("u", "0"))},
+                    {"nombre_parametro": "k", "valor": Decimal(request.POST.get("k"))},
+                    {"nombre_parametro": "u", "valor": Decimal(request.POST.get("u"))},
                 ]
             else:
                 parametros = []
@@ -89,7 +112,7 @@ def instrumento_tabla(request):
     return render(request, 'instrumento_tabla.html', contexto)
 
 @login_required(login_url='/login/')
-@user_passes_test(user_is_admin, login_url='/login/')
+@solo_admin
 def baja_instrumento(request, instrumento_id):
     if request.method == "POST":
         instrumento = get_object_or_404(Instrumento, id=instrumento_id)
@@ -102,7 +125,7 @@ def baja_instrumento(request, instrumento_id):
     return JsonResponse({"success": False, "message": "❌ Error: Solicitud no válida."}, status=400)
 
 @login_required(login_url='/login/')
-@user_passes_test(user_is_admin, login_url='/login/')
+@solo_admin
 def instrumento_modificar(request, instrumento_id):
 
     instrumento = get_object_or_404(Instrumento, id=instrumento_id)
@@ -114,6 +137,13 @@ def instrumento_modificar(request, instrumento_id):
         formset = ParametroFormSet(request.POST, queryset=Parametro.objects.filter(id_instrumento=instrumento))
 
         if form.is_valid() and formset.is_valid():
+            fecha_alta = form.cleaned_data.get('fecha_alta')
+            if fecha_alta and fecha_alta > now().date():
+                return JsonResponse({
+                    "success": False,
+                    "message": "❌ La fecha de alta no puede ser futura."
+                }, status=400)
+
             form.save()
             formset.save()
             return JsonResponse({"success": True, "message": "✅ Instrumento modificado correctamente."})

@@ -3,9 +3,10 @@
 {% block body_id %}parshall-page{% endblock %}
 {% block content %}
 <header class="text-center my-4">
-    <h1>Caudal - Aforador Parshall (Totalizador)</h1>
+    <h1>Calcular - Registrar Caudal</h1>
+        <h2>AFORADOR PARSHALL (TOTALIZADOR)</h2>
 </header>
-<br>
+
 
 <div class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1050">
     <div id="toast" class="toast align-items-center text-white border-0" role="alert" aria-live="assertive" aria-atomic="true">
@@ -32,7 +33,7 @@
 
         <div class="form-group mt-3">
             <label for="lectura_ha" class="form-label">Lectura de ha (cm):</label>
-            <input type="number" step="0.001" min="0" id="lectura_ha" name="lectura_ha" class="form-control" required>
+            <input type="number" step="0.001" id="lectura_ha" name="lectura_ha" class="form-control">
         </div>
 
         <div style="text-align: center; ">
@@ -100,6 +101,7 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 
+
     form.addEventListener("submit", function(event) {
         event.preventDefault();
 
@@ -142,9 +144,13 @@ document.addEventListener("DOMContentLoaded", function() {
         const idInstrumento = instrumentoSelect.value;
 
         if (!idInstrumento || isNaN(lectura)) {
-            mostrarErrorToast("Por favor complete todos los campos correctamente."); // Mostrar como toast
+            mostrarErrorToast("Por favor complete todos los campos."); // Mostrar como toast
             return;
         }
+        if (lectura < 0) {
+        mostrarErrorToast("La lectura no puede ser negativa.");
+        return;
+    }
 
         fetch("{% url 'afoparshall_calcular' %}", {
             method: "POST",
@@ -184,5 +190,5 @@ function mostrarErrorToast(mensaje) {
     toastContainer.show();
 }
 </script>
-</script>
+
 {% endblock %}

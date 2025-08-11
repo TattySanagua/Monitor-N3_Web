@@ -13,6 +13,6 @@ class PrecipitacionForm(ModelForm):
         }
 
         widgets = {
-            'fecha': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'fecha': forms.DateInput(attrs={'class': 'form-control', 'type': 'date', 'min': '1997-01-01'}),
             'valor': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'})
         }

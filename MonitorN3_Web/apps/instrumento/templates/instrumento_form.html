@@ -91,6 +91,24 @@ document.addEventListener("DOMContentLoaded", function () {
         return;
     }
 
+   function mostrarToast(mensaje, tipo = "bg-success") {
+    const toastElement = document.getElementById("toast");
+    const toastMessage = document.getElementById("toast-message");
+
+    toastElement.classList.remove("bg-success", "bg-danger", "bg-warning", "text-dark", "text-white");
+    toastElement.classList.add(tipo);
+
+    if (tipo === "bg-warning") {
+        toastElement.classList.add("text-dark");
+    } else {
+        toastElement.classList.add("text-white");
+    }
+
+    toastMessage.innerText = mensaje;
+    const toast = new bootstrap.Toast(toastElement);
+    toast.show();
+}
+
     const labels = document.querySelectorAll('label');
         labels.forEach(label => {
             const input = document.getElementById(label.getAttribute('for'));
@@ -101,7 +119,28 @@ document.addEventListener("DOMContentLoaded", function () {
 
     form.addEventListener("submit", function (event) {
         event.preventDefault();
-        console.log("📤 Enviando datos...");
+
+        let tipo = document.getElementById("tipo-instrumento").value;
+
+        // Validación de parámetros según el tipo de instrumento
+        if (tipo === "1" || tipo === "2") {
+            let cb = document.getElementById("cb").value;
+            let ci = document.getElementById("ci").value;
+            let angulo = document.getElementById("angulo").value;
+
+            if (!cb || !ci || !angulo) {
+                mostrarToast("⚠️ Debe completar todos los parámetros.", "bg-warning");
+                return;
+            }
+        } else if (tipo === "4") {
+            let k = document.getElementById("k").value;
+            let u = document.getElementById("u").value;
+
+            if (!k || !u) {
+                mostrarToast("⚠️ Debe completar todos los parámetros.", "bg-warning");
+                return;
+            }
+        }
 
         let formData = new FormData(this);
 
@@ -114,27 +153,17 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .then(response => response.json())
         .then(data => {
-
-            let toastElement = document.getElementById("toast");
-            let toastMessage = document.getElementById("toast-message");
-            let toastContainer = new bootstrap.Toast(toastElement);
-
-            if (data.success) {
-                toastElement.classList.remove("bg-danger");
-                toastElement.classList.add("bg-success");
-                form.reset();
-            } else {
-                toastElement.classList.remove("bg-success");
-                toastElement.classList.add("bg-danger");
-            }
-
-            toastMessage.innerText = data.message;
-            toastContainer.show();
+    if (data.success) {
+        mostrarToast(data.message, "bg-success");
+        form.reset();
+    } else {
+        mostrarToast(data.message, "bg-danger");
+    }
         })
         .catch(error => console.error("Error en la solicitud:", error));
     });
 
-    // 🔹 Script para mostrar los parámetros según el tipo de instrumento
+    //Mostrar los parámetros según el tipo de instrumento
     let tipoInstrumento = document.getElementById("tipo-instrumento");
 
     if (tipoInstrumento) {

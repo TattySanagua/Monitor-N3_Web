@@ -13,7 +13,7 @@ class InstrumentoForm(ModelForm):
         fields = ['nombre', 'id_tipo', 'fecha_alta']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
-            'fecha_alta': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'fecha_alta': forms.DateInput(attrs={'class': 'form-control', 'type': 'date', 'min': '1997-01-01'}),
         }
 
 class InstrumentoUpdateForm(ModelForm):
@@ -22,7 +22,7 @@ class InstrumentoUpdateForm(ModelForm):
         fields = ['nombre', 'fecha_alta']
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
-            'fecha_alta': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'fecha_alta': forms.DateInput(attrs={'class': 'form-control', 'type': 'date', 'min': '1997-01-01'}),
         }
 
 class ParametroForm(ModelForm):
@@ -33,3 +33,12 @@ class ParametroForm(ModelForm):
             'nombre_parametro': forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
             'valor': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['nombre_parametro'].disabled = True
+
+        nombre = self.initial.get('nombre_parametro', '').lower()
+        if nombre in ['ci', 'angulo']:
+            self.fields['valor'].disabled = True

@@ -784,7 +784,7 @@ def generar_grafico(request):
 
         df_final.sort_values("fecha", inplace=True)
 
-        print("df_final después del merge:", df_final)
+        #print("df_final después del merge:", df_final)
 
         if fecha_inicio and fecha_fin:
             fecha_inicio = pd.to_datetime(fecha_inicio)

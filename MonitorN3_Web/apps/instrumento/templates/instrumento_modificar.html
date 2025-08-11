@@ -42,10 +42,12 @@
          <br>
             {{ formset.management_form }}
             {% for param_form in formset %}
-                <div class="mb-3">
-                    <label class="form-label">{{ param_form.nombre_parametro.value }}</label> <!-- Muestra el nombre como label -->
-                    {{ param_form.valor }}  <!-- Solo deja el campo de "valor" editable -->
-                </div>
+            <div class="mb-3">
+                <label class="form-label">{{ param_form.nombre_parametro.value }}</label>
+                    {{ param_form.id.as_hidden }}
+                    {{ param_form.nombre_parametro.as_hidden }}  <!-- importante -->
+                    {{ param_form.valor }}
+            </div>
             {% endfor %}
         {% endif %}
         <div style="text-align: center; ">
@@ -93,7 +95,6 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    console.log("✅ Script cargado correctamente");
 
     let form = document.getElementById("instrumento-form");
      let cancelarBtn = document.getElementById("cancelar-btn");
@@ -119,8 +120,7 @@ document.addEventListener("DOMContentLoaded", function() {
             let nombre = labelParam.textContent.trim().toLowerCase();
 
             if (nombre === "ci" || nombre === "angulo") {
-                console.log(`🔒 Deshabilitando: ${nombre}`);
-                valorParam.setAttribute("disabled", true);
+                valorParam.setAttribute("readonly", true);
             } else {
                 console.log(`✅ Permitiendo edición: ${nombre}`);
             }
@@ -132,7 +132,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
     form.addEventListener("submit", function(event) {
         event.preventDefault();
-        console.log("📤 Enviando datos...");
 
         let formData = new FormData(this);
 
@@ -145,7 +144,6 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .then(response => response.json())
         .then(data => {
-            console.log("📥 Respuesta recibida:", data);
 
             let toastElement = document.getElementById("toast");
             let toastMessage = document.getElementById("toast-message");

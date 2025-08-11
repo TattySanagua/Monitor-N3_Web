@@ -1,4 +1,6 @@
 import json, math
+import time
+
 from django.contrib.auth.decorators import login_required, user_passes_test
 from datetime import datetime
 from django.utils import timezone
@@ -17,12 +19,12 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
+from django.core.paginator import Paginator
+from MonitorN3_Web.decorators import admin_o_tecnico, solo_admin
 
-
-def user_is_admin(user):
-    return user.is_authenticated and not user.groups.filter(name__in=["Invitado", "Técnico"]).exists()
 
 @login_required(login_url='/login/')
+@admin_o_tecnico
 def piezometro_calcular(request):
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         try:
@@ -57,7 +59,9 @@ def piezometro_calcular(request):
     else:
         return JsonResponse({'error': 'Solicitud no válida'}, status=400)
 
+
 @login_required(login_url='/login/')
+@admin_o_tecnico
 def piezometro_guardar(request):
     if request.method == 'POST':
         form = MedicionPiezometroForm(request.POST)
@@ -93,15 +97,12 @@ def piezometro_guardar(request):
                     "success": False,
                     "message": "⚠️ Ya existe una medición registrada para este instrumento en la fecha seleccionada."
                 })
-
         else:
-
             return JsonResponse({
                 "success": False,
                 "message": "⚠️ Ya existe una medición registrada para este instrumento en la fecha seleccionada.",
 
             })
-
     return JsonResponse({
         "success": False,
         "message": "❌ Solicitud no válida."
@@ -109,7 +110,7 @@ def piezometro_guardar(request):
 
 
 @login_required(login_url='/login/')
-@user_passes_test(user_is_admin, login_url='/login/')
+@solo_admin
 def editar_medicion(request, id):
     medicion = get_object_or_404(Medicion, id=id)
 
@@ -138,7 +139,7 @@ def editar_medicion(request, id):
 
             return JsonResponse({
                 "success": True,
-                "message": "✅ Instrumento modificado correctamente.",
+                "message": "✅ Medición modificada correctamente.",
                 "redirect_url": redirect_url
             })
         else:
@@ -166,6 +167,7 @@ def editar_medicion(request, id):
 
 
 @login_required(login_url='/login/')
+@admin_o_tecnico
 def freatimetro_calcular(request):
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         try:
@@ -201,6 +203,7 @@ def freatimetro_calcular(request):
         return JsonResponse({'error': 'Solicitud no válida'}, status=400)
 
 @login_required(login_url='/login/')
+@admin_o_tecnico
 def freatimetro_guardar(request):
     if request.method == 'POST':
         form = MedicionFreatimetroForm(request.POST)
@@ -251,9 +254,18 @@ def freatimetro_guardar(request):
     })
 
 @login_required(login_url='/login/')
+@admin_o_tecnico
 def afovolumetrico_calcular(request):
     if request.method == 'POST':
         form = MedicionAforadorVolumetrico(request.POST)
+        form.fields['fecha'].required = False
+        form.fields['volumen_1'].widget.attrs.pop('min', None)
+        form.fields['volumen_2'].widget.attrs.pop('min', None)
+        form.fields['volumen_3'].widget.attrs.pop('min', None)
+        form.fields['tiempo_1'].widget.attrs.pop('min', None)
+        form.fields['tiempo_2'].widget.attrs.pop('min', None)
+        form.fields['tiempo_3'].widget.attrs.pop('min', None)
+
         if form.is_valid():
             v1, t1 = form.cleaned_data['volumen_1'], form.cleaned_data['tiempo_1']
             v2, t2 = form.cleaned_data['volumen_2'], form.cleaned_data['tiempo_2']
@@ -289,22 +301,29 @@ def afovolumetrico_calcular(request):
     return render(request, 'medicion_afovolumetrico_form.html', {'medicion_afovolumetrico_form': form})
 
 @login_required(login_url='/login/')
+@admin_o_tecnico
 def afovolumetrico_guardar(request):
     if request.method == 'POST':
-        form = MedicionAforadorVolumetrico(request.POST)
+        try:
+            form = MedicionAforadorVolumetrico(request.POST)
+        except Exception:
+            return JsonResponse({
+                "success": False,
+                "message": "❌ Error:\nFecha inválida. Ingrese una fecha válida posterior al 01/01/1997."
+            })
+
         if form.is_valid():
             fecha = form.cleaned_data['fecha']
             instrumento = form.cleaned_data['id_instrumento']
-
             hoy = timezone.now().date()
+
             if fecha > hoy:
                 return JsonResponse({
                     "success": False,
-                    "message": "No se pueden registrar mediciones con fecha futura."
+                    "message": "❌ Error:\nNo se pueden registrar mediciones con fecha futura."
                 })
 
             existe = Medicion.objects.filter(fecha=fecha, id_instrumento=instrumento).exists()
-
             if existe:
                 return JsonResponse({
                     "success": False,
@@ -325,33 +344,49 @@ def afovolumetrico_guardar(request):
                     "message": "⚠️ Ya existe una medición registrada para este instrumento en la fecha seleccionada."
                 })
 
+        # ---- ACÁ va la lógica si el form NO es válido ----
+        errores = form.errors
 
-
-        else:
-
-            errores = form.errors.get('__all__')
-
-            if getattr(errores, 'code', '') == 'unique_together':
-
-                mensaje = "⚠️ Ya existe una medición registrada para este instrumento en la fecha seleccionada."
-
+        # Caso 1: Fecha faltante o inválida
+        if 'fecha' in errores:
+            errores_fecha = errores['fecha']
+            if any("obligatorio" in str(e).lower() for e in errores_fecha):
+                mensaje = "❌ Error:\nDebe completar la fecha para guardar el caudal."
+            elif any("1997" in str(e) or "válida" in str(e).lower() for e in errores_fecha):
+                mensaje = "❌ Error:\nLa fecha debe ser posterior al 1 de enero de 1997."
             else:
+                mensaje = "❌ Error:\n" + " ".join(str(e) for e in errores_fecha)
 
-                mensaje = "❌ Error: Datos inválidos en el formulario."
+        # Caso 2: Errores no de campo (como el custom del form)
+        elif errores.get('__all__'):
+            for e in errores['__all__']:
+                if "Ya existe una medición" in str(e):
+                    mensaje = str(e)
+                    break
+            else:
+                mensaje = "❌ Error:\n" + "\n".join(str(e) for e in errores['__all__'])
 
-            return JsonResponse({
+        # Caso 3: Otros errores por campos individuales
+        else:
+            campos_con_errores = []
+            for campo, lista_errores in errores.items():
+                for e in lista_errores:
+                    campos_con_errores.append(f"{campo}: {e}")
+            mensaje = "❌ Error:\n" + "\n".join(
+                campos_con_errores) if campos_con_errores else "❌ Error: Datos inválidos en el formulario."
 
-                "success": False,
+        return JsonResponse({
+            "success": False,
+            "message": mensaje
+        })
 
-                "message": mensaje
-
-            })
     return JsonResponse({
         "success": False,
         "message": "❌ Solicitud no válida."
     })
 
 @login_required(login_url='/login/')
+@admin_o_tecnico
 def afoparshall_calcular(request):
     if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         try:
@@ -367,7 +402,7 @@ def afoparshall_calcular(request):
             except ValueError:
                 return JsonResponse({'error': 'Lectura debe ser un valor numérico'}, status=400)
 
-            if lectura_ha < 0:
+            if lectura < 0:
                 return JsonResponse({'error': 'La lectura no puede ser un valor negativo'}, status=400)
 
             k_param = Parametro.objects.filter(id_instrumento=id_instrumento, nombre_parametro='k').first()
@@ -397,6 +432,7 @@ def afoparshall_calcular(request):
         return render(request, 'medicion_afoparshall_form.html', {'medicion_aforador_parshall_form': form})
 
 @login_required(login_url='/login/')
+@admin_o_tecnico
 def afoparshall_guardar(request):
     if request.method == 'POST':
         form = MedicionAforadorParshall(request.POST)
@@ -465,6 +501,13 @@ def obtener_datos_tabla(tipo_instrumento, template, request):
 
     if fecha_inicio:
         fecha_inicio_dt = datetime.strptime(fecha_inicio, "%Y-%m-%d")
+    else:
+        if tipo_instrumento.upper() in ["PIEZÓMETRO", "PIEZOMETRO", "FREATÍMETRO", "FREATIMETRO"]:
+            fecha_inicio_dt = datetime(2008, 2, 1)
+        else:
+            fecha_inicio_dt = None
+
+    if fecha_inicio_dt:
         filtros_mediciones["fecha__gte"] = fecha_inicio_dt
         filtros_niveles["fecha__gte"] = fecha_inicio_dt
 
@@ -476,8 +519,13 @@ def obtener_datos_tabla(tipo_instrumento, template, request):
     instrumentos = Instrumento.objects.filter(id_tipo__nombre_tipo__icontains=tipo_instrumento).values("id", "nombre")
     df_instrumentos = pd.DataFrame(list(instrumentos))
 
-    mediciones = Medicion.objects.filter(id_instrumento_id__in=df_instrumentos["id"], **filtros_mediciones).values("id",
-        "fecha", "valor", "id_instrumento__nombre")
+    mediciones = Medicion.objects.filter(
+        id_instrumento_id__in=df_instrumentos["id"],
+        **filtros_mediciones
+    ).only("id", "fecha", "valor", "id_instrumento__nombre").values(
+        "id", "fecha", "valor", "id_instrumento__nombre"
+    )
+
     df_mediciones = pd.DataFrame(list(mediciones))
 
     niveles_embalse = Embalse.objects.filter(**filtros_niveles).values("fecha", "nivel_embalse")
@@ -491,39 +539,65 @@ def obtener_datos_tabla(tipo_instrumento, template, request):
         lambda row: {"valor": row["valor"], "id": row["id"]}, axis=1
     )
 
-    # Pivotar usando esa nueva columna "dato"
+    # Pivot
     if not df_mediciones.empty:
-        df_mediciones_pivot = df_mediciones.pivot_table(
+        df_mediciones["fecha"] = pd.to_datetime(df_mediciones["fecha"])
+        df_mediciones["valor_id"] = list(zip(df_mediciones["valor"], df_mediciones["id"]))
+
+        df_pivot = df_mediciones.pivot_table(
             index="fecha",
             columns="id_instrumento__nombre",
-            values="dato",
+            values="valor_id",
             aggfunc="first"
         )
     else:
-        df_mediciones_pivot = pd.DataFrame()
+        df_pivot = pd.DataFrame()
 
-    df_final = df_embalse.merge(df_mediciones_pivot, on="fecha", how="outer").sort_values("fecha", ascending=False)
+    if not df_embalse.empty:
+        df_embalse["fecha"] = pd.to_datetime(df_embalse["fecha"])
 
+    df_final = df_embalse.merge(df_pivot, on="fecha", how="outer").sort_values("fecha", ascending=False)
     df_final["fecha"] = df_final["fecha"].dt.strftime("%d-%m-%Y")
-
     df_final = df_final.fillna("-")
 
     nombres = df_instrumentos["nombre"].tolist()
-    filas_tabla = []
 
+    filas_html = []
+    es_admin = not request.user.groups.filter(name__in=["Invitado", "Técnico"]).exists()
+
+    # Armar las filas de la tabla
     for _, row in df_final.iterrows():
-        fila = {
-            "fecha": row["fecha"],
-            "nivel_embalse": row.get("nivel_embalse", "-"),
-            "valores": [row.get(nombre, "-") for nombre in nombres]
-        }
-        filas_tabla.append(fila)
+        celdas = []
 
+        for nombre in nombres:
+            valor = row.get(nombre, "-")
+
+            if valor != "-" and isinstance(valor, tuple):
+                val, mid = valor
+                if es_admin:
+                    url = reverse("editar_medicion", kwargs={"id": mid})
+                    boton = f'<a href="{url}" class="text-muted" style="font-size:0.65rem;"><i class="fas fa-pen" style="color:#bcbcbc;"></i></a>'
+                    celdas.append(f"<td>{val}</td><td>{boton}</td>")
+                else:
+                    celdas.append(f"<td>{val}</td>")
+            else:
+                if es_admin:
+                    celdas.append("<td>-</td><td>-</td>")
+                else:
+                    celdas.append("<td>-</td>")
+
+        fila_html = f"<tr><td>{row['fecha']}</td><td>{row.get('nivel_embalse', '-')}</td>{''.join(celdas)}</tr>"
+        filas_html.append(fila_html)
+
+    # Contexto para el template
     contexto = {
-        "filas_tabla": filas_tabla,
-        "nombres_aforadores" if tipo_instrumento == "AFORADOR" else "nombres_piezometros" if tipo_instrumento == "PIEZÓMETRO" else "nombres_freatimetros": nombres,
+        "filas_html": "\n".join(filas_html),
+        "nombres_aforadores" if tipo_instrumento == "AFORADOR"
+        else "nombres_piezometros" if tipo_instrumento == "PIEZÓMETRO"
+        else "nombres_freatimetros": nombres,
         "fecha_inicio": fecha_inicio,
         "fecha_fin": fecha_fin,
+        "mostrar_edicion_columnas": es_admin,
     }
 
     return render(request, template, contexto)

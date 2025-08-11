@@ -121,3 +121,22 @@ class PersonalizadoForm(forms.Form):
         elif tipo_medicion == "caudal":
             return Instrumento.objects.filter(id_tipo__nombre_tipo__in=["AFORADOR VOLUMÉTRICO", "AFORADOR PARSHALL"])
         return Instrumento.objects.none()
+
+    def clean(self):
+        cleaned_data = super().clean()
+        eje_x = cleaned_data.get("eje_x")
+        eje_y = cleaned_data.get("eje_y")
+        eje_y_secundario = cleaned_data.get("eje_y_secundario")
+        agregar_eje_y_secundario = cleaned_data.get("agregar_eje_y_secundario")
+
+        if eje_x and eje_y and eje_x == eje_y:
+            raise forms.ValidationError(
+                "⚠️ No se puede generar el gráfico: el eje X no puede ser igual al eje Y."
+            )
+
+        if agregar_eje_y_secundario and eje_x and eje_y_secundario and eje_x == eje_y_secundario:
+            raise forms.ValidationError(
+                "⚠️ No se puede generar el gráfico: el eje X no puede ser igual al eje Y Secundario."
+            )
+
+        return cleaned_data

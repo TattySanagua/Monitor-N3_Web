@@ -5,6 +5,16 @@
     <h2 class="text-center">Gráfico Personalizado</h2>
     <br>
 
+    <!-- Toast -->
+    <div id="toast-container" class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="toast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toast-message"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+    <br>
     <div class="form-container" style="color:black; background: rgba(255, 255, 255, 0.70);box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);">
         <form id="form-grafico" method="POST" action="{% url 'generar_grafico' %}" enctype="multipart/form-data">
         {% csrf_token %}
@@ -196,38 +206,65 @@ document.addEventListener("DOMContentLoaded", function() {
         });
 
         fetch("{% url 'generar_grafico' %}", {
-            method: "POST",
-            body: new URLSearchParams(formData),
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
-            }
-        })
-            .then(response => {
+    method: "POST",
+    body: new URLSearchParams(formData),
+    headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRFToken": document.querySelector("[name=csrfmiddlewaretoken]").value
+    }
+})
+.then(async response => {
+    document.getElementById("loading-message").style.display = "none";
 
-            if (!response.ok) {
-                throw new Error(`❌ Error en la respuesta: ${response.status}`);
-            }
-            return response.json();
-        })
-            .then(data => {
-            document.getElementById("loading-message").style.display = "none";
-            if (data.grafico) {
-                const graficoContainer = document.getElementById("grafico-container");
-                graficoContainer.innerHTML = data.grafico;
+    let data;
+    try {
+        data = await response.json();
+    } catch (e) {
+        mostrarToast("❌ No se pudo interpretar la respuesta del servidor.");
+        return;
+    }
 
-                //Ejecutar scripts del gráfico
-                const scripts = graficoContainer.querySelectorAll('script');
-                scripts.forEach(script => {
-                    eval(script.innerHTML);
-                });
-            } else {
-                alert("❌ Error en la respuesta: " + JSON.stringify(data.error));
-            }
-        })
-            .catch(error => console.error("❌ Error en la solicitud:", error));
+    if (response.ok) {
+        if (data.grafico) {
+            const graficoContainer = document.getElementById("grafico-container");
+            graficoContainer.innerHTML = data.grafico;
+
+            const scripts = graficoContainer.querySelectorAll('script');
+            scripts.forEach(script => eval(script.innerHTML));
+        } else {
+            mostrarToast("⚠️ No se pudo generar el gráfico. Verifique los datos.");
+        }
+    } else {
+        const errores = data.error || {};
+        const mensaje = errores.__all__?.[0] || Object.values(errores)[0] || "❌ Error desconocido.";
+        mostrarToast(mensaje);
+    }
+})
+.catch(error => {
+    document.getElementById("loading-message").style.display = "none";
+    mostrarToast("❌ Error en la solicitud: " + error.message);
+});
     });
 });
+function mostrarToast(mensaje, tipo = "error") {
+    const toast = document.createElement("div");
+    toast.innerHTML = mensaje;
+    toast.style.padding = "10px 20px";
+    toast.style.marginBottom = "10px";
+    toast.style.borderRadius = "10px";
+    toast.style.color = "#fff";
+    toast.style.boxShadow = "0 0 10px rgba(0,0,0,0.2)";
+    toast.style.transition = "opacity 0.5s ease";
+    toast.style.opacity = "1";
+    toast.style.backgroundColor = tipo === "error" ? "#dc3545" : "#28a745";
+
+    document.getElementById("toast-container").appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        setTimeout(() => toast.remove(), 500);
+    }, 4000);
+}
 </script>
 
 {% endblock %}

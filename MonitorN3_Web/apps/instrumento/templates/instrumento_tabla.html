@@ -163,7 +163,7 @@
     }
 
     function darDeBaja(instrumentoId) {
-    if (confirm("¿Está seguro de que desea dar de baja este instrumento?")) {
+    if (confirm("¿Está seguro de que desea eliminar este instrumento?")) {
         fetch(`/instrumento/dar_de_baja/${instrumentoId}/`, {
             method: "POST",
             headers: {
@@ -176,7 +176,7 @@
             if (data.success) {
                 mostrarToast(data.message, "success");
 
-                // 🔹 Actualizar el estado "Activo" a "No" dinámicamente
+                //Actualizar el estado "Activo" a "No" dinámicamente
                 let badgeActivo = document.getElementById(`estado-activo-${instrumentoId}`);
                 if (badgeActivo) {
                     badgeActivo.classList.remove("bg-success");
@@ -191,6 +191,10 @@
                     let fechaFormateada = hoy.toLocaleDateString("es-ES");
                     fechaBaja.innerText = fechaFormateada;
                 }
+
+                setTimeout(() => {
+            location.reload();
+        }, 2000);
 
             } else {
                 mostrarToast("❌ Error al dar de baja el instrumento.", "error");

@@ -262,6 +262,26 @@ def predicciones(request):
             df_combinado['fecha'] = pd.to_datetime(df_combinado['fecha'])
             fecha_max = df_combinado['fecha'].max()
 
+            try:
+                fechas_invalidas = []
+                for fecha_str in fechas_supuestas:
+                    try:
+                        fecha_ingresada = pd.to_datetime(fecha_str)
+                        if fecha_ingresada <= fecha_max:
+                            fechas_invalidas.append(fecha_str)
+                    except Exception:
+                        fechas_invalidas.append(fecha_str)
+
+                if fechas_invalidas:
+                    fechas_formateadas = ', '.join(fechas_invalidas)
+                    context[
+                        'error'] = f"Ingrese fechas válidas y posteriores a la última fecha registrada ({fecha_max.strftime('%d-%m-%Y')}). Fechas inválidas: {fechas_formateadas}"
+                    return render(request, 'predicciones_modelos.html', context)
+
+            except Exception as e:
+                context['error'] = f"Ocurrió un error al validar las fechas ingresadas: {e}"
+                return render(request, 'predicciones_modelos.html', context)
+
             # Filtrar fechas con nivel de embalse faltante
             fechas_sin_embalse = df_combinado[df_combinado['nivel_embalse'].isna()]['fecha'].dt.strftime(
                 '%d-%m-%Y').tolist()
@@ -362,7 +382,7 @@ def predicciones(request):
             # EMC (Error Medio Cuadrático Residual)
             EMC = np.sqrt(((df_calculos['valor'] - df_calculos['yc']) ** 2).sum() / (n - 1 - Nterm))
 
-            # Calcular índice de correlación entre nivel de embalse y nivel piezométrico
+            # Calcular índice de correlación entre nivel de embalse y
             correlacion = df_calculos[['nivel_embalse', 'valor']].corr().iloc[0, 1] * 100  # En porcentaje
 
             # Calcular desviación estándar de los valores medidos
@@ -374,7 +394,7 @@ def predicciones(request):
             context['correlacion'] = correlacion
             context['std_valor'] = std_valor
 
-            # --- Cálculos para Extrapolación ---
+            #Cálculos para Extrapolación
             df_calculos_extrapolacion = df_extrapolacion.copy()
 
             df_calculos_extrapolacion['A'] = df_calculos_extrapolacion['fecha'].dt.year - 1900
